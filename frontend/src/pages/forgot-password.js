@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AuthStyles.css';
 
-function Signup() {
-    const [step, setStep] = useState('register'); // register, verify, welcome
+function ForgotPassword() {
+    const [step, setStep] = useState('request'); // request, verify, reset
     const [formData, setFormData] = useState({
         email: '',
-        password: '',
-        confirmPassword: '',
-        verificationCode: ''
+        verificationCode: '',
+        newPassword: '',
+        confirmPassword: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -28,17 +28,22 @@ function Signup() {
         setLoading(true);
 
         try {
-            if (step === 'register') {
-                if (formData.password !== formData.confirmPassword) {
-                    throw new Error('Passwords do not match');
-                }
-                // TODO: Call API to register user and send verification code
-                console.log('Registration attempt with:', formData);
+            if (step === 'request') {
+                // TODO: Call API to send reset code
+                console.log('Reset code requested for:', formData.email);
                 setStep('verify');
             } else if (step === 'verify') {
                 // TODO: Call API to verify code
                 console.log('Verification attempt with code:', formData.verificationCode);
-                setStep('welcome');
+                setStep('reset');
+            } else if (step === 'reset') {
+                if (formData.newPassword !== formData.confirmPassword) {
+                    throw new Error('Passwords do not match');
+                }
+                // TODO: Call API to reset password
+                console.log('Password reset attempt with:', formData.newPassword);
+                // Redirect to login after successful reset
+                window.location.href = '/login';
             }
         } catch (err) {
             setError(err.message || 'An error occurred');
@@ -47,8 +52,10 @@ function Signup() {
         }
     };
 
-    const renderRegisterForm = () => (
+    const renderRequestForm = () => (
         <form className="auth-form" onSubmit={handleSubmit}>
+            <p>Enter your email address and we'll send you a code to reset your password.</p>
+            
             <div className="form-group">
                 <label htmlFor="email">Email</label>
                 <input
@@ -62,43 +69,16 @@ function Signup() {
                 />
             </div>
 
-            <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    placeholder="Create a password"
-                    minLength="8"
-                />
-            </div>
-
-            <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
-                <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    placeholder="Confirm your password"
-                />
-            </div>
-
             <button 
                 type="submit" 
                 className="auth-button"
                 disabled={loading}
             >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? 'Sending Code...' : 'Send Reset Code'}
             </button>
 
             <div className="auth-links">
-                <p>Already have an account? <Link to="/login">Sign In</Link></p>
+                <Link to="/login">Back to Login</Link>
             </div>
         </form>
     );
@@ -124,31 +104,62 @@ function Signup() {
                 className="auth-button"
                 disabled={loading}
             >
-                {loading ? 'Verifying...' : 'Verify Email'}
+                {loading ? 'Verifying...' : 'Verify Code'}
             </button>
         </form>
     );
 
-    const renderWelcomeMessage = () => (
-        <div className="welcome-message">
-            <h2>Welcome to Ajira Global!</h2>
-            <p>Your account has been successfully created and verified.</p>
-            <Link to="/login" className="auth-button">Proceed to Login</Link>
-        </div>
+    const renderResetForm = () => (
+        <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+                <label htmlFor="newPassword">New Password</label>
+                <input
+                    type="password"
+                    id="newPassword"
+                    name="newPassword"
+                    value={formData.newPassword}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter new password"
+                    minLength="8"
+                />
+            </div>
+
+            <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                    placeholder="Confirm new password"
+                />
+            </div>
+
+            <button 
+                type="submit" 
+                className="auth-button"
+                disabled={loading}
+            >
+                {loading ? 'Resetting Password...' : 'Reset Password'}
+            </button>
+        </form>
     );
 
     return (
         <div className="auth-container">
             <div className="auth-form-container">
-                <h1>{step === 'welcome' ? 'Success!' : 'Create Account'}</h1>
+                <h1>Reset Password</h1>
                 {error && <div className="error-message">{error}</div>}
                 
-                {step === 'register' && renderRegisterForm()}
+                {step === 'request' && renderRequestForm()}
                 {step === 'verify' && renderVerificationForm()}
-                {step === 'welcome' && renderWelcomeMessage()}
+                {step === 'reset' && renderResetForm()}
             </div>
         </div>
     );
 }
 
-export default Signup;
+export default ForgotPassword;

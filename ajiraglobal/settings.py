@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-c=&p98uxmvz(*xqs5%8!miex!27cf1s9c#462px4n677ne8m$c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.16.101', '127.0.0.1', 'localhost', ' https://157c-102-210-40-222.ngrok-free.app', 8000]
 
 
 # Application definition
@@ -38,11 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'accounts',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -82,6 +86,22 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Custom user model
+AUTH_USER_MODEL = 'accounts.User'
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'johnmuthee547@gmail.com'  # Replace with your Gmail address
+EMAIL_HOST_PASSWORD = 'bjfx ikik somn iniz'  # Replace with your Gmail app password
+DEFAULT_FROM_EMAIL = 'johnmuthee547@gmail.com'  # Replace with your Gmail address
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOW_CREDENTIALS = True
 
 
 # Password validation
