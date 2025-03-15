@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AuthStyles.css';
+import UserTypeSelection from '../components/UserTypeSelection';
+import ClientRegistrationForm from '../components/ClientRegistrationForm';
+import JobSeekerRegistrationForm from '../components/JobSeekerRegistrationForm';
 
 function Signup() {
-    const [step, setStep] = useState('register'); // register, verify, welcome
+    const [step, setStep] = useState('select-type'); // select-type, register, verify, welcome
+    const [userType, setUserType] = useState(null); // client or job-seeker
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -22,6 +26,11 @@ function Signup() {
         setError('');
     };
 
+    const handleUserTypeSelect = (type) => {
+        setUserType(type);
+        setStep('register');
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -33,7 +42,7 @@ function Signup() {
                     throw new Error('Passwords do not match');
                 }
                 // TODO: Call API to register user and send verification code
-                console.log('Registration attempt with:', formData);
+                console.log('Registration attempt with:', { ...formData, userType });
                 setStep('verify');
             } else if (step === 'verify') {
                 // TODO: Call API to verify code
@@ -89,6 +98,22 @@ function Signup() {
                 />
             </div>
 
+            {userType === 'client' && (
+                <ClientRegistrationForm
+                    formData={formData}
+                    onChange={handleChange}
+                    error={error}
+                />
+            )}
+
+            {userType === 'job-seeker' && (
+                <JobSeekerRegistrationForm
+                    formData={formData}
+                    onChange={handleChange}
+                    error={error}
+                />
+            )}
+
             <button 
                 type="submit" 
                 className="auth-button"
@@ -143,6 +168,7 @@ function Signup() {
                 <h1>{step === 'welcome' ? 'Success!' : 'Create Account'}</h1>
                 {error && <div className="error-message">{error}</div>}
                 
+                {step === 'select-type' && <UserTypeSelection onSelect={handleUserTypeSelect} />}
                 {step === 'register' && renderRegisterForm()}
                 {step === 'verify' && renderVerificationForm()}
                 {step === 'welcome' && renderWelcomeMessage()}

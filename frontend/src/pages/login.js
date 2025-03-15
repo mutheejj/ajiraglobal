@@ -7,6 +7,7 @@ function Login() {
         email: '',
         password: ''
     });
+    const [userType, setUserType] = useState(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,19 @@ function Login() {
         try {
             // TODO: Implement login logic with API
             console.log('Login attempt with:', formData);
+            // After successful login, the API should return the user type
+            // For now, we'll simulate it
+            const mockUserType = 'client'; // This would come from the API
+            setUserType(mockUserType);
+            
+            // Redirect based on user type
+            if (mockUserType === 'client') {
+                // Redirect to client dashboard
+                console.log('Redirecting to client dashboard');
+            } else {
+                // Redirect to job seeker dashboard
+                console.log('Redirecting to job seeker dashboard');
+            }
         } catch (err) {
             setError('Invalid email or password');
         } finally {
