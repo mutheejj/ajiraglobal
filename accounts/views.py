@@ -4,6 +4,9 @@ from rest_framework.views import APIView
 from django.core.mail import send_mail
 from django.conf import settings
 from .serializers import UserRegistrationSerializer, EmailVerificationSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
     def post(self, request):
@@ -13,13 +16,28 @@ class RegisterView(APIView):
             verification = user.emailverification_set.first()
             
             # Send verification email
-            send_mail(
-                'Verify your email address',
-                f'Your verification code is: {verification.code}',
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
+            try:
+                logger.info(f"Attempting to send verification email to {user.email}")
+                logger.debug(f"Email configuration: Backend={settings.EMAIL_BACKEND}, Host={settings.EMAIL_HOST}, Port={settings.EMAIL_PORT}, TLS={settings.EMAIL_USE_TLS}")
+                logger.debug(f"From email: {settings.DEFAULT_FROM_EMAIL}, Host User: {settings.EMAIL_HOST_USER}")
+                logger.debug(f"Verification code: {verification.code}")
+                
+                send_mail(
+                    subject='Verify your email address',
+                    message=f'Your verification code is: {verification.code}',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                logger.info(f"Successfully sent verification email to {user.email}")
+            except Exception as e:
+                logger.error(f"Failed to send verification email to {user.email}")
+                logger.error(f"Error details: {str(e)}")
+                logger.error(f"Error type: {type(e).__name__}")
+                return Response({
+                    'message': 'Failed to send verification email. Please try again later.',
+                    'error': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             return Response({
                 'message': 'Registration successful. Please check your email for verification code.',

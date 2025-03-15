@@ -92,12 +92,35 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'johnmuthee547@gmail.com'  # Replace with your Gmail address
-EMAIL_HOST_PASSWORD = 'bjfx ikik somn iniz'  # Replace with your Gmail app password
-DEFAULT_FROM_EMAIL = 'johnmuthee547@gmail.com'  # Replace with your Gmail address
+EMAIL_HOST_USER = '84b67b002@smtp-brevo.com'
+EMAIL_HOST_PASSWORD = 'PJhj8RrfdwV3YtMH'
+DEFAULT_FROM_EMAIL = "johnmuthee547@gmail.com"
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'accounts': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development
