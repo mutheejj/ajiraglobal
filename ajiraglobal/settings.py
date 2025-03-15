@@ -97,7 +97,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = '84b67b002@smtp-brevo.com'
 EMAIL_HOST_PASSWORD = 'PJhj8RrfdwV3YtMH'
-DEFAULT_FROM_EMAIL = "johnmuthee547@gmail.com"
+DEFAULT_FROM_EMAIL = 'johnmuthee547@gmail.com'
 
 # Logging configuration
 LOGGING = {
