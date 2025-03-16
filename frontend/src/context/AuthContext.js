@@ -44,8 +44,10 @@ export const AuthProvider = ({ children }) => {
 
             const data = await response.json();
             if (response.ok) {
-
-                const userData = data.user;
+                const userData = {
+                    ...data.user,
+                    user_type: data.user.userType // Map backend's userType to frontend's user_type
+                };
                 setUser(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
                 
@@ -54,6 +56,8 @@ export const AuthProvider = ({ children }) => {
                     navigate('/client-dashboard');
                 } else if (userData.user_type === 'job-seeker') {
                     navigate('/job-seeker-dashboard');
+                } else {
+                    navigate('/');
                 }
                 return true;
             }

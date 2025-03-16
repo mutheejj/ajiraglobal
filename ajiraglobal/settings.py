@@ -90,14 +90,16 @@ DATABASES = {
 # Custom user model
 AUTH_USER_MODEL = 'accounts.User'
 
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
 # Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-relay.brevo.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = '84b67b002@smtp-brevo.com'
-EMAIL_HOST_PASSWORD = 'PJhj8RrfdwV3YtMH'
-DEFAULT_FROM_EMAIL = 'johnmuthee547@gmail.com'
+RESEND_API_KEY = 're_9N3PJ6gf_8vRDsibWiMgRBUQToKDKuefc'  # Your Resend API key
+DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'  # Your verified Resend sender email
+VERIFIED_EMAIL = 'johnmuthee547@gmail.com'  # Your verified email for testing
 
 # Logging configuration
 LOGGING = {
@@ -121,6 +123,7 @@ LOGGING = {
         },
     },
 }
+
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development

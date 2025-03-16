@@ -34,7 +34,7 @@ function AppContent() {
                     <Route 
                         path="/client-dashboard" 
                         element={
-                            isAuthenticated && user.userType === 'client' ? (
+                            isAuthenticated && user.user_type === 'client' ? (
                                 <ClientDashboard />
                             ) : (
                                 <Navigate to="/login" replace />
@@ -44,7 +44,7 @@ function AppContent() {
                     <Route 
                         path="/job-seeker-dashboard" 
                         element={
-                            isAuthenticated && user.userType === 'job-seeker' ? (
+                            isAuthenticated && user.user_type === 'job-seeker' ? (
                                 <JobSeekerDashboard />
                             ) : (
                                 <Navigate to="/login" replace />

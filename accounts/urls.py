@@ -14,6 +14,6 @@ class GetCSRFToken(View):
 urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='register'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
-    path('accounts/auth/login/', LoginView.as_view(), name='login'),
+    path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/csrf/', GetCSRFToken.as_view(), name='csrf'),
 ]
