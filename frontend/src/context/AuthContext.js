@@ -17,14 +17,29 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+    const fetchCSRFToken = async () => {
+        try {
+            await fetch('/api/auth/csrf/', {
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error fetching CSRF token:', error);
+        }
+    };
+
     const login = async (email, password) => {
         try {
+            await fetchCSRFToken();
+            const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+
             const response = await fetch('/api/auth/login/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password }),
+                credentials: 'include'
             });
 
             const data = await response.json();

@@ -8,6 +8,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.utils.decorators import method_decorator
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class RegisterView(APIView):
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
@@ -43,7 +47,16 @@ class RegisterView(APIView):
                 'message': 'Registration successful. Please check your email for verification code.',
                 'email': user.email
             }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Format validation errors
+        if 'detail' in serializer.errors:
+            error_response = serializer.errors
+        else:
+            error_response = {
+                'detail': {
+                    field: messages for field, messages in serializer.errors.items()
+                }
+            }
+        return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyEmailView(APIView):
     def post(self, request):
@@ -59,4 +72,13 @@ class VerifyEmailView(APIView):
             return Response({
                 'message': 'Email verified successfully'
             }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Format validation errors
+        if 'detail' in serializer.errors:
+            error_response = serializer.errors
+        else:
+            error_response = {
+                'detail': {
+                    field: messages for field, messages in serializer.errors.items()
+                }
+            }
+        return Response(error_response, status=status.HTTP_400_BAD_REQUEST)

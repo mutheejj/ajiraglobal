@@ -12,7 +12,20 @@ function Signup() {
         email: '',
         password: '',
         confirmPassword: '',
-        verificationCode: ''
+        verificationCode: '',
+        // Client specific fields
+        companyName: '',
+        industry: '',
+        companySize: '',
+        website: '',
+        description: '',
+        // Job seeker specific fields
+        firstName: '',
+        lastName: '',
+        profession: '',
+        experience: '',
+        skills: '',
+        bio: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -36,13 +49,66 @@ function Signup() {
         setError('');
         setLoading(true);
 
+        if (!userType) {
+            setError('Please select your account type before proceeding.');
+            setLoading(false);
+            setStep('select-type');
+            return;
+        }
+
         try {
             if (step === 'register') {
                 if (formData.password !== formData.confirmPassword) {
                     throw new Error('Passwords do not match');
                 }
-                // TODO: Call API to register user and send verification code
-                console.log('Registration attempt with:', { ...formData, userType });
+                const registrationData = {
+                    email: formData.email,
+                    password: formData.password,
+                    confirm_password: formData.confirmPassword,
+                    user_type: userType,
+                    ...(userType === 'client' ? {
+                        company_name: formData.companyName,
+                        industry: formData.industry,
+                        company_size: formData.companySize,
+                        website: formData.website,
+                        description: formData.description
+                    } : {
+                        first_name: formData.firstName,
+                        last_name: formData.lastName,
+                        profession: formData.profession,
+                        experience: formData.experience,
+                        skills: formData.skills,
+                        bio: formData.bio
+                    })
+                };
+
+                const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+                if (!csrftoken) {
+                    throw new Error('CSRF token not found. Please ensure cookies are enabled.');
+                }
+                const response = await fetch('/api/accounts/auth/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(registrationData),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    if (data.detail) {
+                        const fieldErrors = {};
+                        Object.entries(data.detail).forEach(([field, messages]) => {
+                            fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                        });
+                        setError(Object.entries(fieldErrors).map(([field, message]) => 
+                            `${field.replace('_', ' ').charAt(0).toUpperCase() + field.slice(1)}: ${message}`
+                        ).join('\n'));
+                    }
+                    throw new Error(data.message || 'Registration failed');
+                }
                 setStep('verify');
             } else if (step === 'verify') {
                 // TODO: Call API to verify code

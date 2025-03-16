@@ -2,6 +2,20 @@ import React from 'react';
 import '../styles/AuthStyles.css';
 
 function JobSeekerRegistrationForm({ formData, onChange, error }) {
+    const getFieldError = (fieldName) => {
+        if (!error) return null;
+        const errorLines = error.split('\n');
+        const fieldError = errorLines.find(line => line.toLowerCase().startsWith(fieldName.toLowerCase()));
+        return fieldError ? fieldError.split(': ')[1] : null;
+    };
+
+    const validateField = (fieldName, value) => {
+        if (!value || value.trim() === '') {
+            return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+        }
+        return null;
+    };
+
     return (
         <div className="job-seeker-registration">
             <div className="form-group">
@@ -15,6 +29,9 @@ function JobSeekerRegistrationForm({ formData, onChange, error }) {
                     required
                     placeholder="Enter your first name"
                 />
+                {getFieldError('first name') && (
+                    <div className="field-error">{getFieldError('first name')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -28,6 +45,9 @@ function JobSeekerRegistrationForm({ formData, onChange, error }) {
                     required
                     placeholder="Enter your last name"
                 />
+                {getFieldError('last name') && (
+                    <div className="field-error">{getFieldError('last name')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -41,6 +61,9 @@ function JobSeekerRegistrationForm({ formData, onChange, error }) {
                     required
                     placeholder="e.g. Software Engineer, Project Manager"
                 />
+                {getFieldError('profession') && (
+                    <div className="field-error">{getFieldError('profession')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -59,6 +82,9 @@ function JobSeekerRegistrationForm({ formData, onChange, error }) {
                     <option value="5-10">5-10 years</option>
                     <option value="10+">10+ years</option>
                 </select>
+                {getFieldError('experience') && (
+                    <div className="field-error">{getFieldError('experience')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -72,6 +98,9 @@ function JobSeekerRegistrationForm({ formData, onChange, error }) {
                     placeholder="Enter your key skills (separated by commas)"
                     rows="3"
                 />
+                {getFieldError('skills') && (
+                    <div className="field-error">{getFieldError('skills')}</div>
+                )}
             </div>
 
             <div className="form-group">
