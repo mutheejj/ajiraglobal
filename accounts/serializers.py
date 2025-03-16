@@ -33,24 +33,33 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                  'first_name', 'last_name', 'profession', 'experience', 'skills', 'bio')
 
     def validate(self, data):
-        errors = {}
+        errors = {'detail': {}}
 
         # Validate required base fields
         required_base_fields = ['email', 'username', 'password', 'confirm_password', 'user_type']
         for field in required_base_fields:
             if not data.get(field):
-                errors[field] = [f"{field.replace('_', ' ').title()} is required"]
+                errors['detail'].setdefault(field, []).append(f"{field.replace('_', ' ').title()} is required")
 
         # Validate password match
         if data.get('password') and data.get('confirm_password') and data.get('password') != data.get('confirm_password'):
-            errors['password'] = ["Passwords do not match"]
+            errors['detail'].setdefault('password', []).append("Passwords do not match")
 
         # Convert camelCase to snake_case for frontend compatibility
         field_mapping = {
+            'userType': 'user_type',
+            'confirmPassword': 'confirm_password',
             'companyName': 'company_name',
+            'industry': 'industry',
             'companySize': 'company_size',
+            'website': 'website',
+            'description': 'description',
             'firstName': 'first_name',
-            'lastName': 'last_name'
+            'lastName': 'last_name',
+            'profession': 'profession',
+            'experience': 'experience',
+            'skills': 'skills',
+            'bio': 'bio'
         }
 
         for camel_case, snake_case in field_mapping.items():
@@ -63,17 +72,25 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             required_fields = ['company_name', 'industry', 'company_size']
             for field in required_fields:
                 if not data.get(field):
-                    errors[field] = [f"{field.replace('_', ' ').title()} is required for client registration"]
+                    field_label = field.replace('_', ' ').title()
+                    errors['detail'].setdefault(field, []).append(
+                        f"{field_label} is required for client registration"
+                    )
         elif user_type == 'job-seeker':
             required_fields = ['first_name', 'last_name', 'profession', 'experience', 'skills']
             for field in required_fields:
                 if not data.get(field):
-                    errors[field] = [f"{field.replace('_', ' ').title()} is required for job seeker registration"]
+                    field_label = field.replace('_', ' ').title()
+                    errors['detail'].setdefault(field, []).append(
+                        f"{field_label} is required for job seeker registration"
+                    )
         elif user_type:
-            errors['user_type'] = [f"Invalid user type: {user_type}. Must be either 'client' or 'job-seeker'"]
+            errors['detail'].setdefault('user_type', []).append(
+                f"Invalid user type: {user_type}. Must be either 'client' or 'job-seeker'"
+            )
         
-        if errors:
-            raise serializers.ValidationError({"detail": errors})
+        if errors['detail']:
+            raise serializers.ValidationError(errors)
                 
         return data
 

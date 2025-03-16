@@ -12,9 +12,12 @@ class LoginView(APIView):
         password = request.data.get('password')
         
         if not email or not password:
-            return Response({
-                'error': 'Please provide both email and password'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            errors = {'detail': {}}
+            if not email:
+                errors['detail'].setdefault('email', []).append('Email is required')
+            if not password:
+                errors['detail'].setdefault('password', []).append('Password is required')
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         
         user = authenticate(request, username=email, password=password)
         
@@ -29,5 +32,7 @@ class LoginView(APIView):
             })
         else:
             return Response({
-                'error': 'Invalid credentials'
+                'detail': {
+                    'non_field_errors': ['Invalid credentials']
+                }
             }, status=status.HTTP_401_UNAUTHORIZED)

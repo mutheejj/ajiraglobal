@@ -2,6 +2,20 @@ import React from 'react';
 import '../styles/AuthStyles.css';
 
 function ClientRegistrationForm({ formData, onChange, error }) {
+    const getFieldError = (fieldName) => {
+        if (!error) return null;
+        const errorLines = error.split('\n');
+        const fieldError = errorLines.find(line => line.toLowerCase().startsWith(fieldName.toLowerCase()));
+        return fieldError ? fieldError.split(': ')[1] : null;
+    };
+
+    const validateField = (fieldName, value) => {
+        if (!value || value.trim() === '') {
+            return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+        }
+        return null;
+    };
+
     return (
         <div className="client-registration">
             <div className="form-group">

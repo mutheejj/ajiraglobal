@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import send_mail
+from email_service import send_email
 from django.conf import settings
 from .serializers import UserRegistrationSerializer, EmailVerificationSerializer
 import logging
@@ -26,13 +26,13 @@ class RegisterView(APIView):
                 logger.debug(f"From email: {settings.DEFAULT_FROM_EMAIL}, Host User: {settings.EMAIL_HOST_USER}")
                 logger.debug(f"Verification code: {verification.code}")
                 
-                send_mail(
+                success = send_email(
+                    to=user.email,
                     subject='Verify your email address',
-                    message=f'Your verification code is: {verification.code}',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=False,
+                    html_content=f'<h1>Your verification code: {verification.code}</h1>'
                 )
+                if not success:
+                    raise Exception('Failed to send verification email')
                 logger.info(f"Successfully sent verification email to {user.email}")
             except Exception as e:
                 logger.error(f"Failed to send verification email to {user.email}")
