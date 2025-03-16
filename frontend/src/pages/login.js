@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AuthStyles.css';
+import { useAuth } from '../context/AuthContext';
 
 function Login() {
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
-    const [userType, setUserType] = useState(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -25,23 +26,12 @@ function Login() {
         setLoading(true);
 
         try {
-            // TODO: Implement login logic with API
-            console.log('Login attempt with:', formData);
-            // After successful login, the API should return the user type
-            // For now, we'll simulate it
-            const mockUserType = 'client'; // This would come from the API
-            setUserType(mockUserType);
-            
-            // Redirect based on user type
-            if (mockUserType === 'client') {
-                // Redirect to client dashboard
-                console.log('Redirecting to client dashboard');
-            } else {
-                // Redirect to job seeker dashboard
-                console.log('Redirecting to job seeker dashboard');
+            const success = await login(formData.email, formData.password);
+            if (!success) {
+                setError('Invalid email or password');
             }
         } catch (err) {
-            setError('Invalid email or password');
+            setError('An error occurred during login');
         } finally {
             setLoading(false);
         }

@@ -6,45 +6,57 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Login from './pages/login';
 import Signup from './pages/signup';
+import ClientDashboard from './pages/ClientDashboard';
+import JobSeekerDashboard from './pages/JobSeekerDashboard';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 function App() {
-    
-    const isAuthenticated = false; 
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
+    );
+}
+
+function AppContent() {
+    const { user } = useAuth();
+    const isAuthenticated = !!user;
 
     return (
         <div className="app-container">
             <Header />
-
-           
             <main className="main-content">
                 <Routes>
-                
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
-
-                    
                     <Route 
-                        path="/dashboard" 
+                        path="/client-dashboard" 
                         element={
-                            isAuthenticated ? (
-                                <div>Dashboard Content</div>
+                            isAuthenticated && user.userType === 'client' ? (
+                                <ClientDashboard />
                             ) : (
                                 <Navigate to="/login" replace />
                             )
                         } 
                     />
-
-                    
+                    <Route 
+                        path="/job-seeker-dashboard" 
+                        element={
+                            isAuthenticated && user.userType === 'job-seeker' ? (
+                                <JobSeekerDashboard />
+                            ) : (
+                                <Navigate to="/login" replace />
+                            )
+                        } 
+                    />
                     <Route 
                         path="*" 
                         element={<div>Page Not Found</div>} 
                     />
                 </Routes>
             </main>
-
-          
             <Footer />
         </div>
     );

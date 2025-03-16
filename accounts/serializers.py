@@ -9,10 +9,11 @@ User = get_user_model()
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
+    user_type = serializers.ChoiceField(choices=User.USER_TYPE_CHOICES)
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'confirm_password')
+        fields = ('email', 'username', 'password', 'confirm_password', 'user_type')
 
     def validate(self, data):
         if data['password'] != data['confirm_password']:
@@ -24,7 +25,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(
             email=validated_data['email'],
             username=validated_data['email'],
-            password=validated_data['password']
+            password=validated_data['password'],
+            user_type=validated_data['user_type']
         )
         
         # Create verification code
