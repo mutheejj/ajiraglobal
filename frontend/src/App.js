@@ -9,11 +9,16 @@ import Signup from './pages/signup';
 import ClientDashboard from './pages/ClientDashboard';
 import JobSeekerDashboard from './pages/JobSeekerDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { CssBaseline } from '@mui/material';
 
 function App() {
     return (
         <AuthProvider>
-            <AppContent />
+            <ThemeProvider>
+                <CssBaseline />
+                <AppContent />
+            </ThemeProvider>
         </AuthProvider>
     );
 }

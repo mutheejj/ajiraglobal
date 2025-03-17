@@ -12,7 +12,7 @@ class User(AbstractUser):
     
     email = models.EmailField(unique=True)
     email_verified = models.BooleanField(default=False)
-    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, null=True)
     
     # Additional fields for Client registration
     company_name = models.CharField(max_length=255, null=True)
@@ -28,14 +28,17 @@ class User(AbstractUser):
     skills = models.CharField(max_length=255, null=True)
     bio = models.TextField(null=True, blank=True)
     
+    # Override clean method to skip validation for superusers
     def clean(self):
+        if not self.is_superuser:  # Skip validation for superusers
+            if self.user_type:
+                if self.user_type == 'client':
+                    if not all([self.company_name, self.industry, self.company_size]):
+                        raise ValidationError('Company name, industry, and company size are required for client accounts.')
+                elif self.user_type == 'job-seeker':
+                    if not all([self.first_name, self.last_name, self.profession, self.experience, self.skills]):
+                        raise ValidationError('First name, last name, profession, experience, and skills are required for job seeker accounts.')
         super().clean()
-        if self.user_type == 'client':
-            if not all([self.company_name, self.industry, self.company_size]):
-                raise ValidationError('Company name, industry, and company size are required for client accounts.')
-        elif self.user_type == 'job-seeker':
-            if not all([self.first_name, self.last_name, self.profession, self.experience, self.skills]):
-                raise ValidationError('First name, last name, profession, experience, and skills are required for job seeker accounts.')
 
     
     USERNAME_FIELD = 'email'

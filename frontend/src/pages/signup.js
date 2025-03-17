@@ -56,6 +56,18 @@ function Signup() {
             return;
         }
 
+        // Fetch CSRF token before making the registration request
+        try {
+            await fetch('/api/auth/csrf/', {
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error fetching CSRF token:', error);
+            setError('Failed to initialize secure connection. Please try again.');
+            setLoading(false);
+            return;
+        }
+
         try {
             if (step === 'register') {
                 if (formData.password !== formData.confirmPassword) {

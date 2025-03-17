@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import logo from '../images/logo.jpg';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Avatar, Menu, MenuItem, IconButton } from '@mui/material';
+import { useTheme } from '../context/ThemeContext';
+import { Avatar, Menu, MenuItem, IconButton, InputBase, Paper, IconButton as MuiIconButton } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import SearchIcon from '@mui/icons-material/Search';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 
-function Header() {
+const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const { user, logout } = useAuth();
+    const { mode, toggleTheme } = useTheme();
+    const navigate = useNavigate();
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -28,35 +36,94 @@ function Header() {
     };
 
     return (
-        <header className="header">
-            <br></br>
-            <div className="logo-container">
-                <Link to="/" className="logo">
-                    <img src={logo} alt="AGlo Logo" className="logo-image" />
-                    AjiraGlobal
+        <header style={{
+            backgroundColor: mode === 'dark' ? '#121212' : '#fff',
+            color: mode === 'dark' ? '#fff' : '#000',
+            padding: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 1000,
+            transition: 'all 0.3s ease'
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <Link to="/" style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    textDecoration: 'none',
+                    color: mode === 'dark' ? '#fff' : '#000'
+                }}>
+                    <img src={logo} alt="AGlo Logo" style={{ height: '40px' }} />
+                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>AjiraGlobal</span>
                 </Link>
             </div>
             
-            <div className="search-container">
-                <input 
-                    type="text" 
+            <Paper
+                component="form"
+                sx={{
+                    p: '2px 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: 400,
+                    bgcolor: mode === 'dark' ? 'background.paper' : '#fff',
+                    boxShadow: mode === 'dark' ? '0 2px 4px rgba(255,255,255,0.1)' : '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchQuery.trim()) {
+                        navigate(`/jobs?search=${encodeURIComponent(searchQuery)}`);
+                    }
+                }}
+            >
+                <InputBase
+                    sx={{
+                        ml: 1,
+                        flex: 1,
+                        color: mode === 'dark' ? '#fff' : '#000'
+                    }}
                     placeholder="Search jobs..."
-                    className="search-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <button className="search-button">Search</button>
-            </div>
+                <IconButton 
+                    type="submit" 
+                    sx={{ 
+                        p: '10px',
+                        color: mode === 'dark' ? '#fff' : '#000'
+                    }}
+                >
+                    <SearchIcon />
+                </IconButton>
+            </Paper>
 
-            <div className="hamburger-menu" onClick={toggleMenu}>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
-
-            <nav className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-                <Link to="/" className="nav-link">Home</Link>
-                <Link to="/jobs" className="nav-link">Find Jobs</Link>
-                <Link to="/post-job" className="nav-link">Post Jobs</Link>
-                <div className="auth-buttons">
+            <nav style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2rem'
+            }}>
+                <Link to="/" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Home</Link>
+                <Link to="/jobs" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Find Jobs</Link>
+                <Link to="/post-job" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Post Jobs</Link>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <MuiIconButton
+                        onClick={() => toggleTheme(mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light')}
+                        sx={{
+                            color: mode === 'dark' ? '#fff' : '#000',
+                            '&:hover': {
+                                backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                            }
+                        }}
+                    >
+                        {mode === 'light' ? <Brightness4Icon /> :
+                         mode === 'dark' ? <SettingsBrightnessIcon /> :
+                         <Brightness7Icon />}
+                    </MuiIconButton>
+                    
                     {user ? (
                         <>
                             <IconButton
@@ -65,7 +132,12 @@ function Header() {
                                 edge="end"
                                 aria-label="account of current user"
                                 aria-haspopup="true"
-                                color="inherit"
+                                sx={{
+                                    color: mode === 'dark' ? '#fff' : '#000',
+                                    '&:hover': {
+                                        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                    }
+                                }}
                             >
                                 {user.avatar ? (
                                     <Avatar src={user.avatar} alt={user.name} />
@@ -78,28 +150,86 @@ function Header() {
                                 open={Boolean(anchorEl)}
                                 onClose={handleProfileMenuClose}
                                 onClick={handleProfileMenuClose}
+                                PaperProps={{
+                                    sx: {
+                                        bgcolor: mode === 'dark' ? '#121212' : '#fff',
+                                        color: mode === 'dark' ? '#fff' : '#000'
+                                    }
+                                }}
                             >
-                                <MenuItem component={Link} to={user.userType === 'client' ? '/client-dashboard' : '/job-seeker-dashboard'}>
+                                <MenuItem 
+                                    component={Link} 
+                                    to={user.userType === 'client' ? '/client-dashboard' : '/job-seeker-dashboard'}
+                                    sx={{
+                                        color: mode === 'dark' ? '#fff' : '#000',
+                                        '&:hover': {
+                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                        }
+                                    }}
+                                >
                                     Dashboard
                                 </MenuItem>
-                                <MenuItem component={Link} to="/profile">
+                                <MenuItem 
+                                    component={Link} 
+                                    to="/profile"
+                                    sx={{
+                                        color: mode === 'dark' ? '#fff' : '#000',
+                                        '&:hover': {
+                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                        }
+                                    }}
+                                >
                                     Profile
                                 </MenuItem>
-                                <MenuItem onClick={handleLogout}>
+                                <MenuItem 
+                                    onClick={handleLogout}
+                                    sx={{
+                                        color: mode === 'dark' ? '#fff' : '#000',
+                                        '&:hover': {
+                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                        }
+                                    }}
+                                >
                                     Logout
                                 </MenuItem>
                             </Menu>
                         </>
                     ) : (
-                        <>
-                            <Link to="/login" className="auth-link">Login</Link>
-                            <Link to="/signup" className="auth-link signup">Sign Up</Link>
-                        </>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <Link 
+                                to="/login" 
+                                style={{ 
+                                    color: mode === 'dark' ? '#fff' : '#000',
+                                    textDecoration: 'none',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '4px',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                Login
+                            </Link>
+                            <Link 
+                                to="/signup" 
+                                style={{ 
+                                    color: '#fff',
+                                    backgroundColor: '#1976d2',
+                                    textDecoration: 'none',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '4px',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        backgroundColor: '#1565c0'
+                                    }
+                                }}
+                            >
+                                Sign Up
+                            </Link>
+                        </div>
                     )}
                 </div>
             </nav>
         </header>
     );
-}
+};
 
 export default Header;

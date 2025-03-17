@@ -129,6 +129,14 @@ LOGGING = {
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF settings
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # False to allow JavaScript access
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:8000', 'http://localhost:8000']
+CSRF_USE_SESSIONS = True  # Using session-based CSRF tokens for better security
+CSRF_COOKIE_NAME = 'csrftoken'  # Explicitly set the cookie name
+CSRF_COOKIE_SECURE = False  # Set to True in production
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

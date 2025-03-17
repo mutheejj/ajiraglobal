@@ -203,22 +203,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         try:
             user.full_clean()
             user.save()
+            
+            # Create verification code
+            expiry = timezone.now() + timedelta(hours=24)
+            EmailVerification.objects.create(user=user, expires_at=expiry)
+            
             return user
         except ValidationError as e:
             raise serializers.ValidationError({'detail': e.message_dict})
-        
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['email'],
-            password=validated_data['password'],
-            user_type=user_type,
-            **profile_fields
-        )
-        
-        # Create verification code
-        expiry = timezone.now() + timedelta(hours=24)
-        EmailVerification.objects.create(user=user, expires_at=expiry)
-        return user
 
 class EmailVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField()
