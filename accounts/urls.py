@@ -12,7 +12,7 @@ class GetCSRFToken(View):
         return JsonResponse({'success': 'CSRF cookie set'})
 
 urlpatterns = [
-    path('auth/register/', RegisterView.as_view(), name='register'),
+    path('accounts/auth/register/', RegisterView.as_view(), name='register'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/csrf/', GetCSRFToken.as_view(), name='csrf'),
