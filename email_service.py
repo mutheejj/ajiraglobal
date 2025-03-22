@@ -1,11 +1,8 @@
-import resend
-from django.conf import settings
 import logging
+from django.core.mail import send_mail
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
-
-# Initialize Resend with API key from settings
-resend.api_key = settings.RESEND_API_KEY
 
 def send_email(to, subject, html_content):
     try:
@@ -15,12 +12,15 @@ def send_email(to, subject, html_content):
             to = settings.VERIFIED_EMAIL
             subject = f"[Original recipient: {to}] {subject}"
 
-        response = resend.Emails.send({
-            "from": settings.DEFAULT_FROM_EMAIL,
-            "to": to,
-            "subject": subject,
-            "html": html_content
-        })
+        # Use Django's send_mail function
+        send_mail(
+            subject=subject,
+            message='',  # Plain text version
+            html_message=html_content,  # HTML version
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[to],
+            fail_silently=False,
+        )
         logger.info(f"Successfully sent email to {to}")
         return True, None
     except Exception as e:

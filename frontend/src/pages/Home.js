@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Container, Grid, Typography, Paper, TextField, MenuItem, Chip, IconButton, InputAdornment } from '@mui/material';
+import { Box, Container, Grid, Typography, Paper, TextField, MenuItem, Chip, InputAdornment } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -44,11 +44,7 @@ const FilterChip = styled(Chip)(({ theme }) => ({
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
-    experienceLevel: 'all',
-    budgetRange: 'all',
-    projectType: 'all',
-  });
+
 
   // Mock job data - replace with API call
   const jobs = [

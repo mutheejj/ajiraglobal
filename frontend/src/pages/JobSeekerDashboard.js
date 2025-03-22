@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Container, Grid, Typography, Paper, TextField, Button, Chip, Avatar, Tabs, Tab } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import WorkIcon from '@mui/icons-material/Work';
-import SchoolIcon from '@mui/icons-material/School';
-import StarIcon from '@mui/icons-material/Star';
+
 import JobApplications from '../components/job-seeker/JobApplications';
 import SavedJobs from '../components/job-seeker/SavedJobs';
 

@@ -18,10 +18,6 @@ const Header = () => {
     const { mode, toggleTheme } = useTheme();
     const navigate = useNavigate();
 
-    const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen);
-    };
-
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
     };

@@ -97,9 +97,13 @@ AUTHENTICATION_BACKENDS = [
 
 
 # Email settings
-RESEND_API_KEY = 're_9N3PJ6gf_8vRDsibWiMgRBUQToKDKuefc'  # Your Resend API key
-DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'  # Your verified Resend sender email
-VERIFIED_EMAIL = 'johnmuthee547@gmail.com'  # Your verified email for testing
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'johnmuthee547@gmail.com'  # Replace with your email
+EMAIL_HOST_PASSWORD = 'jkfb azwb kvoy zbun'  # Replace with your app password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Logging configuration
 LOGGING = {
@@ -128,14 +132,36 @@ LOGGING = {
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
+]
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # CSRF settings
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = False  # False to allow JavaScript access
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:8000', 'http://localhost:8000']
-CSRF_USE_SESSIONS = True  # Using session-based CSRF tokens for better security
-CSRF_COOKIE_NAME = 'csrftoken'  # Explicitly set the cookie name
+CSRF_COOKIE_SAMESITE = None  # Allow cross-origin requests in development
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access to CSRF token
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:8000', 'http://127.0.0.1:8000']
+CSRF_USE_SESSIONS = False  # Use cookie-based CSRF tokens
+CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_SECURE = False  # Set to True in production
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'  # Match frontend header name
+CSRF_COOKIE_DOMAIN = None  # Allow all domains in development
+CSRF_COOKIE_PATH = '/'
+CSRF_COOKIE_AGE = 31449600  # Set cookie age to 1 year
 
 
 # Password validation

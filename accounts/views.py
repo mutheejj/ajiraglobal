@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class RegisterView(APIView):
+    http_method_names = ['post']
+    
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():

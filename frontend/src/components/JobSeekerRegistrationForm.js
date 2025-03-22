@@ -5,15 +5,10 @@ function JobSeekerRegistrationForm({ formData, onChange, error }) {
     const getFieldError = (fieldName) => {
         if (!error) return null;
         const errorLines = error.split('\n');
-        const fieldError = errorLines.find(line => line.toLowerCase().startsWith(fieldName.toLowerCase()));
+        const fieldError = errorLines.find(line => 
+            line.toLowerCase().startsWith(fieldName.toLowerCase())
+        );
         return fieldError ? fieldError.split(': ')[1] : null;
-    };
-
-    const validateField = (fieldName, value) => {
-        if (!value || value.trim() === '') {
-            return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
-        }
-        return null;
     };
 
     return (

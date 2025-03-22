@@ -56,16 +56,24 @@ function Signup() {
             return;
         }
 
-        // Fetch CSRF token before making the registration request
-        try {
-            await fetch('/api/auth/csrf/', {
-                credentials: 'include'
-            });
-        } catch (error) {
-            console.error('Error fetching CSRF token:', error);
-            setError('Failed to initialize secure connection. Please try again.');
-            setLoading(false);
-            return;
+        // Get CSRF token from cookie
+        const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+        if (!csrftoken) {
+            try {
+                // Fetch CSRF token if not present
+                await fetch('/api/auth/csrf/', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const newCsrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+                if (!newCsrfToken) {
+                    throw new Error('Failed to get CSRF token');
+                }
+            } catch (err) {
+                setError('Failed to get CSRF token. Please refresh the page and try again.');
+                setLoading(false);
+                return;
+            }
         }
 
         try {
@@ -73,6 +81,9 @@ function Signup() {
                 if (formData.password !== formData.confirmPassword) {
                     throw new Error('Passwords do not match');
                 }
+
+                // Use CSRF token from cookie
+
                 const registrationData = {
                     email: formData.email,
                     password: formData.password,
@@ -94,15 +105,11 @@ function Signup() {
                     })
                 };
 
-                const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
-                if (!csrftoken) {
-                    throw new Error('CSRF token not found. Please ensure cookies are enabled.');
-                }
                 const response = await fetch('/api/accounts/auth/register/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
+                        'X-CSRFToken': document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1]
                     },
                     body: JSON.stringify(registrationData),
                     credentials: 'include'
@@ -113,11 +120,12 @@ function Signup() {
                     if (data.detail) {
                         const fieldErrors = {};
                         Object.entries(data.detail).forEach(([field, messages]) => {
-                            fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                            fieldErrors[field] = Array.isArray(messages) ? messages.join(', ') : messages;
                         });
                         setError(Object.entries(fieldErrors).map(([field, message]) => 
                             `${field.replace('_', ' ').charAt(0).toUpperCase() + field.slice(1)}: ${message}`
                         ).join('\n'));
+                        throw new Error('Validation failed');
                     }
                     throw new Error(data.message || 'Registration failed');
                 }

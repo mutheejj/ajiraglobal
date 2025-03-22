@@ -5,15 +5,10 @@ function ClientRegistrationForm({ formData, onChange, error }) {
     const getFieldError = (fieldName) => {
         if (!error) return null;
         const errorLines = error.split('\n');
-        const fieldError = errorLines.find(line => line.toLowerCase().startsWith(fieldName.toLowerCase()));
+        const fieldError = errorLines.find(line => 
+            line.toLowerCase().startsWith(fieldName.toLowerCase())
+        );
         return fieldError ? fieldError.split(': ')[1] : null;
-    };
-
-    const validateField = (fieldName, value) => {
-        if (!value || value.trim() === '') {
-            return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
-        }
-        return null;
     };
 
     return (
@@ -29,6 +24,9 @@ function ClientRegistrationForm({ formData, onChange, error }) {
                     required
                     placeholder="Enter your company name"
                 />
+                {getFieldError('company name') && (
+                    <div className="field-error">{getFieldError('company name')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -49,6 +47,9 @@ function ClientRegistrationForm({ formData, onChange, error }) {
                     <option value="retail">Retail</option>
                     <option value="other">Other</option>
                 </select>
+                {getFieldError('industry') && (
+                    <div className="field-error">{getFieldError('industry')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -67,6 +68,9 @@ function ClientRegistrationForm({ formData, onChange, error }) {
                     <option value="201-500">201-500 employees</option>
                     <option value="501+">501+ employees</option>
                 </select>
+                {getFieldError('company size') && (
+                    <div className="field-error">{getFieldError('company size')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -79,6 +83,9 @@ function ClientRegistrationForm({ formData, onChange, error }) {
                     onChange={onChange}
                     placeholder="https://your-company.com"
                 />
+                {getFieldError('website') && (
+                    <div className="field-error">{getFieldError('website')}</div>
+                )}
             </div>
 
             <div className="form-group">
@@ -91,6 +98,9 @@ function ClientRegistrationForm({ formData, onChange, error }) {
                     placeholder="Tell us about your company and hiring needs"
                     rows="4"
                 />
+                {getFieldError('description') && (
+                    <div className="field-error">{getFieldError('description')}</div>
+                )}
             </div>
 
             {error && <div className="error-message">{error}</div>}
