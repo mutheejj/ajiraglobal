@@ -15,29 +15,60 @@ class User(AbstractUser):
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, null=True)
     
     # Additional fields for Client registration
-    company_name = models.CharField(max_length=255, null=True)
-    industry = models.CharField(max_length=255, null=True)
-    company_size = models.CharField(max_length=100, null=True)
+    company_name = models.CharField(max_length=255, null=True, blank=True)
+    industry = models.CharField(max_length=255, null=True, blank=True)
+    company_size = models.CharField(max_length=100, null=True, blank=True)
     website = models.URLField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     
     # Additional fields for Job Seeker registration
     # Note: first_name and last_name are already provided by AbstractUser
-    profession = models.CharField(max_length=255, null=True)
-    experience = models.CharField(max_length=255, null=True)
-    skills = models.CharField(max_length=255, null=True)
+    profession = models.CharField(max_length=255, null=True, blank=True)
+    experience = models.CharField(max_length=255, null=True, blank=True)
+    skills = models.CharField(max_length=255, null=True, blank=True)
     bio = models.TextField(null=True, blank=True)
     
     # Override clean method to skip validation for superusers
     def clean(self):
         if not self.is_superuser:  # Skip validation for superusers
             if self.user_type:
+                errors = {}
                 if self.user_type == 'client':
-                    if not all([self.company_name, self.industry, self.company_size]):
-                        raise ValidationError('Company name, industry, and company size are required for client accounts.')
+                    # Validate required client fields
+                    required_client_fields = {
+                        'company_name': 'Company Name',
+                        'industry': 'Industry',
+                        'company_size': 'Company Size'
+                    }
+                    for field, display_name in required_client_fields.items():
+                        if not getattr(self, field):
+                            errors[field] = [f'{display_name} is required for client accounts.']
+                    
+                    # Set job seeker fields to None
+                    job_seeker_fields = ['profession', 'experience', 'skills', 'bio']
+                    for field in job_seeker_fields:
+                        setattr(self, field, None)
+                        
                 elif self.user_type == 'job-seeker':
-                    if not all([self.first_name, self.last_name, self.profession, self.experience, self.skills]):
-                        raise ValidationError('First name, last name, profession, experience, and skills are required for job seeker accounts.')
+                    # Validate required job seeker fields
+                    required_seeker_fields = {
+                        'first_name': 'First Name',
+                        'last_name': 'Last Name',
+                        'profession': 'Profession',
+                        'experience': 'Experience',
+                        'skills': 'Skills'
+                    }
+                    for field, display_name in required_seeker_fields.items():
+                        if not getattr(self, field):
+                            errors[field] = [f'{display_name} is required for job seeker accounts.']
+                    
+                    # Set client fields to None
+                    client_fields = ['company_name', 'industry', 'company_size', 'website', 'description']
+                    for field in client_fields:
+                        setattr(self, field, None)
+                
+                if errors:
+                    raise ValidationError(errors)
         super().clean()
 
     
