@@ -105,6 +105,13 @@ EMAIL_HOST_USER = 'johnmuthee547@gmail.com'  # Replace with your email
 EMAIL_HOST_PASSWORD = 'jkfb azwb kvoy zbun'  # Replace with your app password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+# Email for development testing - comment this out in production
+# When DEBUG is True and REDIRECT_EMAILS_IN_DEBUG is True, emails will be redirected to this address
+VERIFIED_EMAIL = EMAIL_HOST_USER  # Change this to your verified testing email
+
+# Set this to False to send emails directly to the actual recipients even in DEBUG mode
+REDIRECT_EMAILS_IN_DEBUG = False
+
 # Logging configuration
 LOGGING = {
     'version': 1,
@@ -152,7 +159,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF settings
-CSRF_COOKIE_SAMESITE = None  # Allow cross-origin requests in development
+CSRF_COOKIE_SAMESITE = None  # Allow cross-site requests in development
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access to CSRF token
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:8000', 'http://127.0.0.1:8000']
 CSRF_USE_SESSIONS = False  # Use cookie-based CSRF tokens
@@ -197,6 +204,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+
+# Import local settings if available
+try:
+    from local_settings import *
+except ImportError:
+    pass
 
 STATIC_URL = '/static/'
 

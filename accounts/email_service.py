@@ -6,11 +6,14 @@ logger = logging.getLogger(__name__)
 
 def send_email(to, subject, html_content):
     try:
-        # In development, redirect all emails to the verified email address
-        if settings.DEBUG:
+        # Only redirect emails in DEBUG mode if explicitly configured to do so
+        original_recipient = to
+        if settings.DEBUG and hasattr(settings, 'VERIFIED_EMAIL') and getattr(settings, 'REDIRECT_EMAILS_IN_DEBUG', False):
             logger.info(f"Debug mode: Redirecting email from {to} to {settings.VERIFIED_EMAIL}")
             to = settings.VERIFIED_EMAIL
-            subject = f"[Original recipient: {to}] {subject}"
+            subject = f"[Original recipient: {original_recipient}] {subject}"
+        else:
+            logger.info(f"Sending email directly to {to}")
 
         # Use Django's send_mail function
         send_mail(

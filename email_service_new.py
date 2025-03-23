@@ -8,7 +8,7 @@ def send_email(to, subject, html_content):
     try:
         # Only redirect emails in DEBUG mode if explicitly configured to do so
         original_recipient = to
-        if settings.DEBUG and hasattr(settings, 'VERIFIED_EMAIL') and getattr(settings, 'REDIRECT_EMAILS_IN_DEBUG', False):
+        if settings.DEBUG and hasattr(settings, 'VERIFIED_EMAIL') and getattr(settings, 'REDIRECT_EMAILS_IN_DEBUG', True):
             logger.info(f"Debug mode: Redirecting email from {to} to {settings.VERIFIED_EMAIL}")
             to = settings.VERIFIED_EMAIL
             subject = f"[Original recipient: {original_recipient}] {subject}"
