@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Box, Container, Typography, Button, Grid, Paper, TextField, MenuItem, Chip } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Typography, Button, Grid, Paper, TextField, MenuItem, Chip, Card, CardContent, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import axios from 'axios';
 import { styled } from '@mui/material/styles';
 
 const categories = [
@@ -14,6 +16,21 @@ const categories = [
   'Virtual Assistant',
   'Other'
 ];
+
+const initialJobForm = {
+  title: '',
+  category: '',
+  description: '',
+  requirements: '',
+  skills: [],
+  experience_level: '',
+  project_type: '',
+  budget: '',
+  duration: '',
+  location: '',
+  remote_work: false,
+  status: 'draft'
+};
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -30,18 +47,51 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 }));
 
 const ClientDashboard = () => {
-  const [jobForm, setJobForm] = useState({
-    title: '',
-    category: '',
-    description: '',
-    budget: '',
-    duration: '',
-    skills: [],
-    experience_level: '',
-    project_type: '',
+  const [jobs, setJobs] = useState([]);
+  const [stats, setStats] = useState({
+    totalJobs: 0,
+    activeJobs: 0,
+    draftJobs: 0,
+    closedJobs: 0
   });
-
+  const [openDialog, setOpenDialog] = useState(false);
+  const [jobForm, setJobForm] = useState(initialJobForm);
   const [skillInput, setSkillInput] = useState('');
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const response = await axios.get('/api/jobs/');
+      setJobs(response.data);
+      
+      // Calculate stats
+      const jobStats = response.data.reduce((acc, job) => {
+        acc.totalJobs++;
+        acc[`${job.status}Jobs`]++;
+        return acc;
+      }, { totalJobs: 0, activeJobs: 0, draftJobs: 0, closedJobs: 0 });
+      
+      setStats(jobStats);
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    }
+  };
+
+  const handleDialogOpen = () => {
+    setJobForm(initialJobForm);
+    setOpenDialog(true);
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setJobForm(initialJobForm);
+    setSkillInput('');
+  };
+
+
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -68,26 +118,145 @@ const ClientDashboard = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement job posting API call
-    console.log('Job Form Data:', jobForm);
+    try {
+      const jobData = {
+        ...jobForm,
+        status: 'active'
+      };
+      await axios.post('/api/jobs/', jobData);
+      handleDialogClose();
+      fetchJobs();
+    } catch (error) {
+      console.error('Error posting job:', error);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    try {
+      const jobData = {
+        ...jobForm,
+        status: 'draft'
+      };
+      await axios.post('/api/jobs/', jobData);
+      handleDialogClose();
+      fetchJobs();
+    } catch (error) {
+      console.error('Error saving draft:', error);
+    }
+  };
+
+  const handleStatusChange = async (jobId, newStatus) => {
+    try {
+      await axios.post(`/api/jobs/${jobId}/change_status/`, { status: newStatus });
+      fetchJobs();
+    } catch (error) {
+      console.error('Error changing job status:', error);
+    }
   };
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom component="h1" sx={{ mb: 4 }}>
-        Post a New Job
-      </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1">
+          Client Dashboard
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleDialogOpen}
+        >
+          Post New Job
+        </Button>
+      </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <StyledPaper component="form" onSubmit={handleSubmit}>
-            <Typography variant="h6" gutterBottom>
-              Job Details
-            </Typography>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>Total Jobs</Typography>
+              <Typography variant="h4">{stats.totalJobs}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>Active Jobs</Typography>
+              <Typography variant="h4">{stats.activeJobs}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>Draft Jobs</Typography>
+              <Typography variant="h4">{stats.draftJobs}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>Closed Jobs</Typography>
+              <Typography variant="h4">{stats.closedJobs}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-            <Grid container spacing={3}>
+      <TableContainer component={Paper} sx={{ mb: 4 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Title</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Posted Date</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {jobs.map((job) => (
+              <TableRow key={job.id}>
+                <TableCell>{job.title}</TableCell>
+                <TableCell>{job.category}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                    color={job.status === 'active' ? 'success' : job.status === 'draft' ? 'default' : 'error'}
+                  />
+                </TableCell>
+                <TableCell>{new Date(job.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <IconButton size="small" onClick={() => handleStatusChange(job.id, job.status === 'active' ? 'closed' : 'active')}>
+                    <VisibilityIcon />
+                  </IconButton>
+                  <IconButton size="small">
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton size="small">
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
+      <DialogTitle>Post a New Job</DialogTitle>
+      <DialogContent>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={8}>
+            <StyledPaper component="form" onSubmit={handleSubmit}>
+              <Typography variant="h6" gutterBottom>
+                Job Details
+              </Typography>
+
+        <Grid container spacing={3}>
               <Grid item xs={12}>
                 <TextField
                   required
@@ -248,6 +417,13 @@ const ClientDashboard = () => {
           </StyledPaper>
         </Grid>
       </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleDialogClose}>Cancel</Button>
+        <Button onClick={handleSaveAsDraft}>Save as Draft</Button>
+        <Button variant="contained" onClick={handleSubmit}>Post Job</Button>
+      </DialogActions>
+    </Dialog>
     </Container>
   );
 };

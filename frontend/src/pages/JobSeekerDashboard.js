@@ -35,6 +35,13 @@ const JobSeekerDashboard = () => {
     skills: ['React', 'Node.js', 'Python', 'AWS', 'MongoDB'],
     hourlyRate: '50',
     availability: 'Full-time',
+    currency: 'KSH',
+    resume: null,
+    portfolio: null,
+    githubLink: '',
+    linkedinLink: '',
+    personalWebsite: '',
+    portfolioDescription: ''
   });
 
   const [newSkill, setNewSkill] = useState('');
@@ -99,16 +106,31 @@ const JobSeekerDashboard = () => {
                   <Typography variant="h6" gutterBottom>
                     Hourly Rate
                   </Typography>
-                  <TextField
-                    fullWidth
-                    label="Rate (USD)"
-                    value={profile.hourlyRate}
-                    onChange={(e) => setProfile({ ...profile, hourlyRate: e.target.value })}
-                    type="number"
-                    InputProps={{
-                      startAdornment: '$',
-                    }}
-                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={8}>
+                      <TextField
+                        fullWidth
+                        label="Rate"
+                        value={profile.hourlyRate}
+                        onChange={(e) => setProfile({ ...profile, hourlyRate: e.target.value })}
+                        type="number"
+                        InputProps={{
+                          startAdornment: profile.currency === 'KSH' ? 'KSh' : '$',
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={4}>
+                      <TextField
+                        fullWidth
+                        select
+                        value={profile.currency}
+                        onChange={(e) => setProfile({ ...profile, currency: e.target.value })}
+                      >
+                        <option value="KSH">KSH</option>
+                        <option value="USD">USD</option>
+                      </TextField>
+                    </Grid>
+                  </Grid>
                 </Box>
 
                 <Box>
@@ -125,6 +147,34 @@ const JobSeekerDashboard = () => {
                     <option value="Part-time">Part-time</option>
                     <option value="Contract">Contract</option>
                   </TextField>
+                </Box>
+
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Resume Upload
+                  </Typography>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => setProfile({ ...profile, resume: e.target.files[0] })}
+                    style={{ display: 'none' }}
+                    id="resume-upload"
+                  />
+                  <label htmlFor="resume-upload">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      fullWidth
+                      sx={{ mb: 1 }}
+                    >
+                      Upload Resume
+                    </Button>
+                  </label>
+                  {profile.resume && (
+                    <Typography variant="body2" color="text.secondary">
+                      {profile.resume.name}
+                    </Typography>
+                  )}
                 </Box>
               </StyledPaper>
             </Grid>
@@ -177,17 +227,66 @@ const JobSeekerDashboard = () => {
                     <Typography variant="h6" gutterBottom>
                       Portfolio & Work History
                     </Typography>
-                    <Button
-                      variant="contained"
-                      color="primary"
+                    <input
+                      type="file"
+                      accept=".pdf,.zip,.rar"
+                      onChange={(e) => setProfile({ ...profile, portfolio: e.target.files[0] })}
+                      style={{ display: 'none' }}
+                      id="portfolio-upload"
+                    />
+                    <label htmlFor="portfolio-upload">
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        component="span"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                      >
+                        Upload Portfolio
+                      </Button>
+                    </label>
+                    {profile.portfolio && (
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        {profile.portfolio.name}
+                      </Typography>
+                    )}
+                    <TextField
                       fullWidth
+                      multiline
+                      rows={3}
+                      label="Portfolio Description"
+                      value={profile.portfolioDescription}
+                      onChange={(e) => setProfile({ ...profile, portfolioDescription: e.target.value })}
                       sx={{ mb: 2 }}
-                    >
-                      Add Portfolio Item
-                    </Button>
-                    <Typography variant="body2" color="text.secondary" align="center">
-                      Showcase your best work to attract potential clients
+                    />
+                  </StyledPaper>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <StyledPaper>
+                    <Typography variant="h6" gutterBottom>
+                      Social & Professional Links
                     </Typography>
+                    <TextField
+                      fullWidth
+                      label="GitHub Profile"
+                      value={profile.githubLink}
+                      onChange={(e) => setProfile({ ...profile, githubLink: e.target.value })}
+                      sx={{ mb: 2 }}
+                    />
+                    <TextField
+                      fullWidth
+                      label="LinkedIn Profile"
+                      value={profile.linkedinLink}
+                      onChange={(e) => setProfile({ ...profile, linkedinLink: e.target.value })}
+                      sx={{ mb: 2 }}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Personal Website"
+                      value={profile.personalWebsite}
+                      onChange={(e) => setProfile({ ...profile, personalWebsite: e.target.value })}
+                    />
                   </StyledPaper>
                 </Grid>
 

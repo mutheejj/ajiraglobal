@@ -28,6 +28,22 @@ class User(AbstractUser):
     skills = models.CharField(max_length=255, null=True, blank=True)
     bio = models.TextField(null=True, blank=True)
     
+    # Profile picture and document uploads
+    profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    resume = models.FileField(upload_to='resumes/', null=True, blank=True)
+    portfolio = models.FileField(upload_to='portfolios/', null=True, blank=True)
+    
+    # Social and professional links
+    github_link = models.URLField(null=True, blank=True)
+    linkedin_link = models.URLField(null=True, blank=True)
+    personal_website = models.URLField(null=True, blank=True)
+    
+    # Currency preference
+    currency = models.CharField(max_length=3, default='KSH')
+    
+    # Portfolio description
+    portfolio_description = models.TextField(null=True, blank=True)
+    
     # Override clean method to skip validation for superusers
     def clean(self):
         if not self.is_superuser:  # Skip validation for superusers
@@ -56,7 +72,9 @@ class User(AbstractUser):
                         'last_name': 'Last Name',
                         'profession': 'Profession',
                         'experience': 'Experience',
-                        'skills': 'Skills'
+                        'skills': 'Skills',
+                        'github_link': 'GitHub Profile',
+                        'linkedin_link': 'LinkedIn Profile'
                     }
                     for field, display_name in required_seeker_fields.items():
                         if not getattr(self, field):
