@@ -4,6 +4,7 @@ import { styled } from '@mui/material/styles';
 
 import JobApplications from '../components/job-seeker/JobApplications';
 import SavedJobs from '../components/job-seeker/SavedJobs';
+import NotificationPreferences from '../components/job-seeker/NotificationPreferences';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -72,7 +73,7 @@ const JobSeekerDashboard = () => {
     setCurrentTab(newValue);
   };
 
-  const renderTabContent = () => {
+  const renderProfile = () => {
     switch (currentTab) {
       case 0:
         return (
@@ -323,149 +324,7 @@ const JobSeekerDashboard = () => {
           <Tab label="Saved Jobs" />
         </Tabs>
       </Box>
-      {renderTabContent()}
-      <Grid container spacing={3}>
-        {/* Profile Section */}
-        <Grid item xs={12} md={4}>
-          <StyledPaper>
-            <ProfileSection>
-              <Avatar
-                sx={{
-                  width: 120,
-                  height: 120,
-                  mb: 2,
-                  bgcolor: 'primary.main',
-                  fontSize: '3rem',
-                }}
-              >
-                {profile.fullName.charAt(0)}
-              </Avatar>
-              <Typography variant="h5" gutterBottom>
-                {profile.fullName}
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                {profile.title}
-              </Typography>
-              <Button variant="outlined" color="primary">
-                Edit Profile Picture
-              </Button>
-            </ProfileSection>
-
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Hourly Rate
-              </Typography>
-              <TextField
-                fullWidth
-                label="Rate (USD)"
-                value={profile.hourlyRate}
-                onChange={(e) => setProfile({ ...profile, hourlyRate: e.target.value })}
-                type="number"
-                InputProps={{
-                  startAdornment: '$',
-                }}
-              />
-            </Box>
-
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Availability
-              </Typography>
-              <TextField
-                fullWidth
-                select
-                value={profile.availability}
-                onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
-              >
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-              </TextField>
-            </Box>
-          </StyledPaper>
-        </Grid>
-
-        {/* Main Content Section */}
-        <Grid item xs={12} md={8}>
-          <Grid container spacing={3}>
-            {/* Bio Section */}
-            <Grid item xs={12}>
-              <StyledPaper>
-                <Typography variant="h6" gutterBottom>
-                  Professional Bio
-                </Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  value={profile.bio}
-                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                />
-              </StyledPaper>
-            </Grid>
-
-            {/* Skills Section */}
-            <Grid item xs={12}>
-              <StyledPaper>
-                <Typography variant="h6" gutterBottom>
-                  Skills
-                </Typography>
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Add Skill"
-                    value={newSkill}
-                    onChange={(e) => setNewSkill(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleSkillAdd())}
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {profile.skills.map((skill) => (
-                    <SkillChip
-                      key={skill}
-                      label={skill}
-                      onDelete={() => handleSkillDelete(skill)}
-                    />
-                  ))}
-                </Box>
-              </StyledPaper>
-            </Grid>
-
-            {/* Portfolio Section */}
-            <Grid item xs={12}>
-              <StyledPaper>
-                <Typography variant="h6" gutterBottom>
-                  Portfolio & Work History
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  sx={{ mb: 2 }}
-                >
-                  Add Portfolio Item
-                </Button>
-                <Typography variant="body2" color="text.secondary" align="center">
-                  Showcase your best work to attract potential clients
-                </Typography>
-              </StyledPaper>
-            </Grid>
-
-            {/* Save Changes */}
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                fullWidth
-                onClick={handleProfileUpdate}
-              >
-                Save Changes
-              </Button>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+      {renderProfile()}
     </Container>
   );
 };

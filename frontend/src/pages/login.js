@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AuthStyles.css';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 function Login() {
     const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ function Login() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
+    const { mode } = useTheme();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -37,8 +39,17 @@ function Login() {
         }
     };
 
+    useEffect(() => {
+        // Apply theme to document for CSS selectors to work
+        document.documentElement.setAttribute('data-theme', mode);
+        return () => {
+            // Clean up when component unmounts
+            document.documentElement.removeAttribute('data-theme');
+        };
+    }, [mode]);
+
     return (
-        <div className="auth-container">
+        <div className="auth-container" data-theme={mode}>
             <div className="auth-form-container">
                 <h1>Welcome Back</h1>
                 <form className="auth-form" onSubmit={handleSubmit}>

@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .jobs import JobPost
 from .job_serializers import JobPostSerializer
+from .job_notifications import send_job_notification
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,9 @@ class JobPostViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         if self.request.user.user_type != 'client':
             raise serializers.ValidationError('Only clients can post jobs')
-        serializer.save()
+        job = serializer.save(client=self.request.user)
+        if job.status == 'active':
+            send_job_notification(job)
     
     @action(detail=True, methods=['post'])
     def change_status(self, request, pk=None):

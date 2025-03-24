@@ -37,10 +37,12 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
-  backgroundColor: '#ffffff',
+  backgroundColor: theme.palette.background.paper,
   borderRadius: '10px',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-  transition: 'transform 0.2s ease-in-out',
+  boxShadow: theme.shadows[2],
+  transition: theme.transitions.create('transform', {
+    duration: theme.transitions.duration.shorter,
+  }),
   '&:hover': {
     transform: 'translateY(-5px)',
   },
@@ -173,26 +175,56 @@ const ClientDashboard = () => {
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{
+            backgroundColor: theme => theme.palette.background.paper,
+            boxShadow: theme => theme.shadows[2],
+            transition: theme => theme.transitions.create(['box-shadow', 'transform'], {
+              duration: theme.transitions.duration.standard,
+            }),
+            '&:hover': {
+              boxShadow: theme => theme.shadows[4],
+              transform: 'translateY(-4px)',
+            },
+          }}>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>Total Jobs</Typography>
-              <Typography variant="h4">{stats.totalJobs}</Typography>
+              <Typography variant="h4" color="text.primary">{stats.totalJobs}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{
+            backgroundColor: theme => theme.palette.background.paper,
+            boxShadow: theme => theme.shadows[2],
+            transition: theme => theme.transitions.create(['box-shadow', 'transform'], {
+              duration: theme.transitions.duration.standard,
+            }),
+            '&:hover': {
+              boxShadow: theme => theme.shadows[4],
+              transform: 'translateY(-4px)',
+            },
+          }}>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>Active Jobs</Typography>
-              <Typography variant="h4">{stats.activeJobs}</Typography>
+              <Typography variant="h4" color="text.primary">{stats.activeJobs}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{
+            backgroundColor: theme => theme.palette.background.paper,
+            boxShadow: theme => theme.shadows[2],
+            transition: theme => theme.transitions.create(['box-shadow', 'transform'], {
+              duration: theme.transitions.duration.standard,
+            }),
+            '&:hover': {
+              boxShadow: theme => theme.shadows[4],
+              transform: 'translateY(-4px)',
+            },
+          }}>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>Draft Jobs</Typography>
-              <Typography variant="h4">{stats.draftJobs}</Typography>
+              <Typography variant="h4" color="text.primary">{stats.draftJobs}</Typography>
             </CardContent>
           </Card>
         </Grid>

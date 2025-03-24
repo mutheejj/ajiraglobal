@@ -17,9 +17,16 @@ import PhoneIcon from '@mui/icons-material/Phone';
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   height: '100%',
-  backgroundColor: '#ffffff',
-  borderRadius: '10px',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[2],
+  transition: theme.transitions.create(['box-shadow', 'transform'], {
+    duration: theme.transitions.duration.standard,
+  }),
+  '&:hover': {
+    boxShadow: theme.shadows[4],
+    transform: 'translateY(-4px)',
+  },
 }));
 
 const ProfileSection = styled(Box)(({ theme }) => ({

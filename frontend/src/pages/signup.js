@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+imprt React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AuthStyles.css';
 import UserTypeSelection from '../components/UserTypeSelection';
 import ClientRegistrationForm from '../components/ClientRegistrationForm';
 import JobSeekerRegistrationForm from '../components/JobSeekerRegistrationForm';
+import { useTheme } from '../context/ThemeContext';
 
 function Signup() {
     const [step, setStep] = useState('select-type'); // select-type, register, verify, welcome
     const [userType, setUserType] = useState(null); // client or job-seeker
+    const { mode } = useTheme();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -248,8 +250,17 @@ function Signup() {
         </div>
     );
 
+    useEffect(() => {
+        // Apply theme to document for CSS selectors to work
+        document.documentElement.setAttribute('data-theme', mode);
+        return () => {
+            // Clean up when component unmounts
+            document.documentElement.removeAttribute('data-theme');
+        };
+    }, [mode]);
+
     return (
-        <div className="auth-container">
+        <div className="auth-container" data-theme={mode}>
             <div className="auth-form-container">
                 <h1>{step === 'welcome' ? 'Success!' : 'Create Account'}</h1>
                 {error && <div className="error-message">{error}</div>}
