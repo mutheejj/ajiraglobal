@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Container, Grid, Typography, Paper, TextField, Button, Chip, Avatar, Tabs, Tab, CircularProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
@@ -30,7 +30,14 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 
 const JobSeekerDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
-  const { profile, loading, error, updateProfile } = useJobSeeker();
+  const { profile: contextProfile, loading, error, updateProfile } = useJobSeeker();
+  const [profile, setProfile] = useState(contextProfile || {});
+
+  useEffect(() => {
+    if (contextProfile) {
+      setProfile(contextProfile);
+    }
+  }, [contextProfile]);
   const [selectedImage, setSelectedImage] = useState(null);
 
   const [newSkill, setNewSkill] = useState('');
