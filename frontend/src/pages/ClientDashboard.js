@@ -25,11 +25,18 @@ const initialJobForm = {
   skills: [],
   experience_level: '',
   project_type: '',
-  budget: '',
+  budget_min: '',
+  budget_max: '',
   duration: '',
   location: '',
   remote_work: false,
-  status: 'draft'
+  status: 'draft',
+  preferred_timezone: '',
+  attachments: [],
+  visibility: 'public',
+  application_deadline: '',
+  payment_type: 'fixed',
+  interview_required: false
 };
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -59,6 +66,9 @@ const ClientDashboard = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [jobForm, setJobForm] = useState(initialJobForm);
   const [skillInput, setSkillInput] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     fetchJobs();
@@ -122,16 +132,65 @@ const ClientDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    
+    // Basic validation
+    if (!jobForm.title.trim()) {
+      setError('Job title is required');
+      return;
+    }
+    if (!jobForm.category) {
+      setError('Please select a category');
+      return;
+    }
+    if (!jobForm.description.trim()) {
+      setError('Job description is required');
+      return;
+    }
+    if (jobForm.payment_type === 'fixed') {
+      if (!jobForm.budget_min || !jobForm.budget_max) {
+        setError('Please specify budget range');
+        return;
+      }
+      if (Number(jobForm.budget_min) > Number(jobForm.budget_max)) {
+        setError('Minimum budget cannot be greater than maximum budget');
+        return;
+      }
+    }
+    if (!jobForm.duration) {
+      setError('Please specify project duration');
+      return;
+    }
+    
     try {
-      const jobData = {
-        ...jobForm,
-        status: 'active'
-      };
-      await axios.post('/api/jobs/', jobData);
+      const formData = new FormData();
+      
+      // Append all job data
+      Object.keys(jobForm).forEach(key => {
+        if (key === 'attachments') {
+          jobForm.attachments.forEach(file => {
+            formData.append('attachments', file);
+          });
+        } else if (key === 'skills') {
+          formData.append('skills', JSON.stringify(jobForm.skills));
+        } else {
+          formData.append(key, jobForm[key]);
+        }
+      });
+      
+      formData.append('status', 'active');
+      
+      await axios.post('/api/jobs/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
       handleDialogClose();
       fetchJobs();
     } catch (error) {
       console.error('Error posting job:', error);
+      setError(error.response?.data?.message || 'Failed to create job. Please try again.');
     }
   };
 
@@ -281,6 +340,16 @@ const ClientDashboard = () => {
       <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
       <DialogTitle>Post a New Job</DialogTitle>
       <DialogContent>
+          {error && (
+            <Box sx={{ mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+              <Typography color="error">{error}</Typography>
+            </Box>
+          )}
+          {successMessage && (
+            <Box sx={{ mb: 2, p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+              <Typography color="success.main">{successMessage}</Typography>
+            </Box>
+          )}
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
             <StyledPaper component="form" onSubmit={handleSubmit}>
@@ -331,38 +400,115 @@ const ClientDashboard = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Budget ($)"
-                  name="budget"
-                  type="number"
-                  value={jobForm.budget}
-                  onChange={handleFormChange}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Duration (in days)"
-                  name="duration"
-                  type="number"
-                  value={jobForm.duration}
-                  onChange={handleFormChange}
-                />
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Payment Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Payment Type"
+                      name="payment_type"
+                      value={jobForm.payment_type}
+                      onChange={handleFormChange}
+                    >
+                      <MenuItem value="fixed">Fixed Price</MenuItem>
+                      <MenuItem value="hourly">Hourly Rate</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      required
+                      fullWidth
+                      label="Minimum Budget ($)"
+                      name="budget_min"
+                      type="number"
+                      value={jobForm.budget_min}
+                      onChange={handleFormChange}
+                      InputProps={{
+                        inputProps: { min: 0 }
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      required
+                      fullWidth
+                      label="Maximum Budget ($)"
+                      name="budget_max"
+                      type="number"
+                      value={jobForm.budget_max}
+                      onChange={handleFormChange}
+                      InputProps={{
+                        inputProps: { min: 0 }
+                      }}
+                    />
+                  </Grid>
+                </Grid>
               </Grid>
 
               <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Project Timeline
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      required
+                      fullWidth
+                      label="Duration (in days)"
+                      name="duration"
+                      type="number"
+                      value={jobForm.duration}
+                      onChange={handleFormChange}
+                      InputProps={{
+                        inputProps: { min: 1 }
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      required
+                      fullWidth
+                      type="date"
+                      label="Application Deadline"
+                      name="application_deadline"
+                      value={jobForm.application_deadline}
+                      onChange={handleFormChange}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Required Skills
+                </Typography>
                 <Box sx={{ mb: 2 }}>
                   <TextField
                     fullWidth
-                    label="Required Skills"
+                    label="Add Skills"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleSkillAdd())}
+                    helperText="Press Enter to add a skill"
+                    InputProps={{
+                      endAdornment: (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={handleSkillAdd}
+                          disabled={!skillInput.trim()}
+                        >
+                          Add
+                        </Button>
+                      ),
+                    }}
                   />
                 </Box>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -371,6 +517,8 @@ const ClientDashboard = () => {
                       key={skill}
                       label={skill}
                       onDelete={() => handleSkillDelete(skill)}
+                      color="primary"
+                      variant="outlined"
                     />
                   ))}
                 </Box>
@@ -392,6 +540,23 @@ const ClientDashboard = () => {
                 </TextField>
               </Grid>
 
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Project Requirements
+                </Typography>
+                <TextField
+                  required
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Project Requirements"
+                  name="requirements"
+                  value={jobForm.requirements}
+                  onChange={handleFormChange}
+                  helperText="Specify the detailed requirements and qualifications needed for this project"
+                />
+              </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
                   required
@@ -406,6 +571,92 @@ const ClientDashboard = () => {
                   <MenuItem value="ongoing">Ongoing Project</MenuItem>
                   <MenuItem value="complex">Complex Project</MenuItem>
                 </TextField>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={jobForm.interview_required}
+                      onChange={(e) => setJobForm(prev => ({
+                        ...prev,
+                        interview_required: e.target.checked
+                      }))}
+                      name="interview_required"
+                    />
+                  }
+                  label="Require Interview"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Preferred Timezone"
+                  name="preferred_timezone"
+                  value={jobForm.preferred_timezone}
+                  onChange={handleFormChange}
+                >
+                  <MenuItem value="EAT">East Africa Time (EAT)</MenuItem>
+                  <MenuItem value="UTC">UTC</MenuItem>
+                  <MenuItem value="flexible">Flexible</MenuItem>
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Job Visibility"
+                  name="visibility"
+                  value={jobForm.visibility}
+                  onChange={handleFormChange}
+                  helperText="Control who can see and apply to your job"
+                >
+                  <MenuItem value="public">Public - Visible to all</MenuItem>
+                  <MenuItem value="private">Private - Invite only</MenuItem>
+                  <MenuItem value="featured">Featured - Promoted listing</MenuItem>
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12}>
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => setJobForm(prev => ({
+                    ...prev,
+                    attachments: Array.from(e.target.files)
+                  }))}
+                  style={{ display: 'none' }}
+                  id="job-attachments"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+                />
+                <label htmlFor="job-attachments">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    fullWidth
+                    startIcon={<AddIcon />}
+                  >
+                    Add Attachments
+                  </Button>
+                </label>
+                {jobForm.attachments.length > 0 && (
+                  <Box sx={{ mt: 1 }}>
+                    {jobForm.attachments.map((file, index) => (
+                      <Chip
+                        key={index}
+                        label={file.name}
+                        onDelete={() => setJobForm(prev => ({
+                          ...prev,
+                          attachments: prev.attachments.filter((_, i) => i !== index)
+                        }))}
+                        sx={{ mr: 1, mb: 1 }}
+                      />
+                    ))}
+                  </Box>
+                )}
               </Grid>
 
               <Grid item xs={12}>
