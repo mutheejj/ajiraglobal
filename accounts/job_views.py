@@ -16,14 +16,17 @@ class JobPostViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return JobPost.objects.none()
         user = self.request.user
         if user.user_type == 'client':
             return JobPost.objects.filter(client=user)
         return JobPost.objects.filter(status='active')
     
     def perform_create(self, serializer):
-        if self.request.user.user_type != 'client':
-            raise serializers.ValidationError('Only clients can post jobs')
+        if not hasattr(self.request.user, 'user_type') or self.request.user.user_type != 'client':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Only clients can post jobs')
         job = serializer.save(client=self.request.user)
         if job.status == 'active':
             send_job_notification(job)

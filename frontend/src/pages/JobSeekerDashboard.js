@@ -37,6 +37,7 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 const JobSeekerDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const { profile: contextProfile, loading, error, updateProfile } = useJobSeeker();
+  const [previewImage, setPreviewImage] = useState(null);
   const [profile, setProfile] = useState({
     skills: [],
     first_name: '',
@@ -91,12 +92,17 @@ const JobSeekerDashboard = () => {
     const success = await updateProfile(formData);
     if (success) {
       setSelectedImage(null);
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+        setPreviewImage(null);
+      }
     }
   };
 
   const handleImageChange = (event) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedImage(event.target.files[0]);
+      setPreviewImage(URL.createObjectURL(event.target.files[0]));
     }
   };
 
@@ -133,7 +139,7 @@ const JobSeekerDashboard = () => {
               <StyledPaper>
                 <ProfileSection>
                   <Avatar
-                    src={profile.profile_picture}
+                    src={previewImage || profile.profile_picture}
                     sx={{
                       width: 120,
                       height: 120,
@@ -144,6 +150,9 @@ const JobSeekerDashboard = () => {
                   >
                     {profile.first_name ? profile.first_name.charAt(0) : ''}
                   </Avatar>
+                  <Typography variant="subtitle1" color="text.primary" gutterBottom>
+                    {profile.email}
+                  </Typography>
                   <Typography variant="h5" gutterBottom>
                     {`${profile.first_name} ${profile.last_name}`}
                   </Typography>
@@ -381,6 +390,33 @@ const JobSeekerDashboard = () => {
         return <JobApplications />;
       case 2:
         return <SavedJobs />;
+      case 3:
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <StyledPaper>
+                <Typography variant="h6" gutterBottom>
+                  Recommended Jobs
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Based on your skills and experience
+                </Typography>
+                {/* Recommended jobs will be implemented here */}
+              </StyledPaper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <StyledPaper>
+                <Typography variant="h6" gutterBottom>
+                  Learning Resources
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Enhance your skills with these resources
+                </Typography>
+                {/* Learning resources will be implemented here */}
+              </StyledPaper>
+            </Grid>
+          </Grid>
+        );
       default:
         return null;
     }
@@ -393,6 +429,7 @@ const JobSeekerDashboard = () => {
           <Tab label="Profile" />
           <Tab label="Applications" />
           <Tab label="Saved Jobs" />
+          <Tab label="Recommendations" />
         </Tabs>
       </Box>
       {renderProfile()}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Button, Grid, Paper, TextField, MenuItem, Chip, Card, CardContent, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { Box, Container, Typography, Button, Grid, Paper, TextField, MenuItem, Chip, Card, CardContent, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, Avatar, LinearProgress, Divider } from '@mui/material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as VisibilityIcon, Business as BusinessIcon, People as PeopleIcon, Assessment as AssessmentIcon, Timeline as TimelineIcon } from '@mui/icons-material';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import { styled } from '@mui/material/styles';
 
@@ -61,8 +62,29 @@ const ClientDashboard = () => {
     totalJobs: 0,
     activeJobs: 0,
     draftJobs: 0,
-    closedJobs: 0
+    closedJobs: 0,
+    totalApplications: 0,
+    shortlistedCandidates: 0,
+    interviewsScheduled: 0,
+    offersExtended: 0
   });
+  const [companyProfile, setCompanyProfile] = useState({
+    name: 'Your Company Name',
+    industry: 'Technology',
+    size: '50-100',
+    location: 'New York, USA',
+    description: 'A leading technology company...',
+    website: 'www.yourcompany.com',
+    logo: null
+  });
+  const [recruitmentMetrics, setRecruitmentMetrics] = useState([
+    { name: 'Jan', applications: 65, interviews: 28, offers: 15 },
+    { name: 'Feb', applications: 59, interviews: 32, offers: 20 },
+    { name: 'Mar', applications: 80, interviews: 41, offers: 25 },
+    { name: 'Apr', applications: 81, interviews: 37, offers: 22 },
+    { name: 'May', applications: 56, interviews: 31, offers: 18 },
+    { name: 'Jun', applications: 55, interviews: 35, offers: 21 }
+  ]);
   const [openDialog, setOpenDialog] = useState(false);
   const [jobForm, setJobForm] = useState(initialJobForm);
   const [skillInput, setSkillInput] = useState('');
@@ -180,9 +202,11 @@ const ClientDashboard = () => {
       
       formData.append('status', 'active');
       
+      const token = localStorage.getItem('token');
       await axios.post('/api/jobs/', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -200,7 +224,12 @@ const ClientDashboard = () => {
         ...jobForm,
         status: 'draft'
       };
-      await axios.post('/api/jobs/', jobData);
+      const token = localStorage.getItem('token');
+      await axios.post('/api/jobs/', jobData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       handleDialogClose();
       fetchJobs();
     } catch (error) {
@@ -210,7 +239,12 @@ const ClientDashboard = () => {
 
   const handleStatusChange = async (jobId, newStatus) => {
     try {
-      await axios.post(`/api/jobs/${jobId}/change_status/`, { status: newStatus });
+      const token = localStorage.getItem('token');
+      await axios.post(`/api/jobs/${jobId}/change_status/`, { status: newStatus }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       fetchJobs();
     } catch (error) {
       console.error('Error changing job status:', error);
@@ -219,6 +253,112 @@ const ClientDashboard = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Company Profile Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Avatar
+            sx={{ width: 100, height: 100, mr: 3 }}
+            src={companyProfile.logo}
+          >
+            <BusinessIcon sx={{ fontSize: 60 }} />
+          </Avatar>
+          <Box>
+            <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
+            </Typography>
+            <Typography variant="body2" sx={{ maxWidth: 600 }}>
+              {companyProfile.description}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            sx={{ ml: 'auto' }}
+          >
+            Edit Profile
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* Recruitment Metrics Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          Recruitment Overview
+        </Typography>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} md={3}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <PeopleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+              <Typography variant="h4">{stats.totalApplications}</Typography>
+              <Typography color="text.secondary">Total Applications</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <AssessmentIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
+              <Typography variant="h4">{stats.shortlistedCandidates}</Typography>
+              <Typography color="text.secondary">Shortlisted</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <TimelineIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
+              <Typography variant="h4">{stats.interviewsScheduled}</Typography>
+              <Typography color="text.secondary">Interviews</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <BusinessIcon sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
+              <Typography variant="h4">{stats.offersExtended}</Typography>
+              <Typography color="text.secondary">Offers Extended</Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
+        <Typography variant="h6" gutterBottom>Hiring Progress</Typography>
+        <Box sx={{ height: 300, mt: 2 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={recruitmentMetrics}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="applications" fill="#8884d8" name="Applications" />
+              <Bar dataKey="interviews" fill="#82ca9d" name="Interviews" />
+              <Bar dataKey="offers" fill="#ffc658" name="Offers" />
+            </BarChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+      {/* Company Profile Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Avatar
+            sx={{ width: 100, height: 100, mr: 3 }}
+            src={companyProfile.logo}
+          >
+            <BusinessIcon sx={{ fontSize: 60 }} />
+          </Avatar>
+          <Box>
+            <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
+            </Typography>
+            <Typography variant="body2" sx={{ maxWidth: 600 }}>
+              {companyProfile.description}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            sx={{ ml: 'auto' }}
+          >
+            Edit Profile
+          </Button>
+        </Box>
+      </Paper>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" component="h1">
           Client Dashboard
@@ -297,45 +437,242 @@ const ClientDashboard = () => {
         </Grid>
       </Grid>
 
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Posted Date</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {jobs.map((job) => (
-              <TableRow key={job.id}>
-                <TableCell>{job.title}</TableCell>
-                <TableCell>{job.category}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                    color={job.status === 'active' ? 'success' : job.status === 'draft' ? 'default' : 'error'}
-                  />
-                </TableCell>
-                <TableCell>{new Date(job.created_at).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <IconButton size="small" onClick={() => handleStatusChange(job.id, job.status === 'active' ? 'closed' : 'active')}>
-                    <VisibilityIcon />
-                  </IconButton>
-                  <IconButton size="small">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton size="small">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
+      {/* Active Job Listings Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          Active Job Listings
+        </Typography>
+        <Grid container spacing={3}>
+          {jobs.map((job) => (
+            <Grid item xs={12} md={6} lg={4} key={job.id}>
+              <Card sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)'
+                }
+              }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      {job.title}
+                    </Typography>
+                    <Chip
+                      label={job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                      color={job.status === 'active' ? 'success' : job.status === 'draft' ? 'default' : 'error'}
+                      size="small"
+                    />
+                  </Box>
+                  
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    {job.category}
+                  </Typography>
+                  
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Budget:</strong> ${job.budget_min} - ${job.budget_max}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Duration:</strong> {job.duration} days
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Posted:</strong> {new Date(job.created_at).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {job.skills.slice(0, 3).map((skill, index) => (
+                      <Chip
+                        key={index}
+                        label={skill}
+                        size="small"
+                        variant="outlined"
+                      />
+                    ))}
+                    {job.skills.length > 3 && (
+                      <Chip
+                        label={`+${job.skills.length - 3}`}
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
+                </CardContent>
+
+                <Divider />
+                <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <IconButton size="small" onClick={() => handleStatusChange(job.id, job.status === 'active' ? 'closed' : 'active')}>
+                      <VisibilityIcon />
+                    </IconButton>
+                    <IconButton size="small">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton size="small">
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                  <Button size="small" color="primary">
+                    View Applications
+                  </Button>
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Paper>
+
+      {/* Recent Applications Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+          Recent Applications
+        </Typography>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Applicant</TableCell>
+                <TableCell>Job Position</TableCell>
+                <TableCell>Applied Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Match Score</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {/* Sample data - replace with actual applications data */}
+              {[
+                {
+                  id: 1,
+                  applicant: 'John Doe',
+                  position: 'Senior Developer',
+                  date: '2024-01-15',
+                  status: 'Under Review',
+                  score: 85
+                },
+                {
+                  id: 2,
+                  applicant: 'Jane Smith',
+                  position: 'UX Designer',
+                  date: '2024-01-14',
+                  status: 'Shortlisted',
+                  score: 92
+                }
+              ].map((application) => (
+                <TableRow key={application.id}>
+                  <TableCell>{application.applicant}</TableCell>
+                  <TableCell>{application.position}</TableCell>
+                  <TableCell>{new Date(application.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={application.status}
+                      color={application.status === 'Shortlisted' ? 'success' : 'default'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={application.score}
+                        sx={{ flexGrow: 1, mr: 1 }}
+                      />
+                      <Typography variant="body2">{application.score}%</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton size="small">
+                      <VisibilityIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* Settings and Job Application Management */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5">Recruitment Settings</Typography>
+          <Button variant="outlined" startIcon={<EditIcon />}>Update Settings</Button>
+        </Box>
+        
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Application Process</Typography>
+                <Box sx={{ mb: 2 }}>
+                  <FormControlLabel
+                    control={<Switch checked={true} />}
+                    label="Automatic Application Screening"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Automatically screen candidates based on job requirements
+                  </Typography>
+                </Box>
+                <Box sx={{ mb: 2 }}>
+                  <FormControlLabel
+                    control={<Switch checked={true} />}
+                    label="Interview Scheduling"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Enable automatic interview scheduling with qualified candidates
+                  </Typography>
+                </Box>
+                <Box>
+                  <FormControlLabel
+                    control={<Switch checked={false} />}
+                    label="Assessment Tests"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Include skill assessment tests in the application process
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Notification Preferences</Typography>
+                <Box sx={{ mb: 2 }}>
+                  <FormControlLabel
+                    control={<Switch checked={true} />}
+                    label="New Application Alerts"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Receive notifications for new job applications
+                  </Typography>
+                </Box>
+                <Box sx={{ mb: 2 }}>
+                  <FormControlLabel
+                    control={<Switch checked={true} />}
+                    label="Interview Reminders"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Get reminders for upcoming interviews
+                  </Typography>
+                </Box>
+                <Box>
+                  <FormControlLabel
+                    control={<Switch checked={true} />}
+                    label="Application Status Updates"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Receive updates when application status changes
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Paper>
 
       <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
       <DialogTitle>Post a New Job</DialogTitle>

@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }) => {
                 };
                 setUser(userData);
                 localStorage.setItem('user', JSON.stringify(userData));
+                localStorage.setItem('token', data.token); // Store the authentication token
                 
                 // Redirect based on user type
                 if (userData.user_type === 'client') {
