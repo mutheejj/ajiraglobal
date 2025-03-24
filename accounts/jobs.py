@@ -31,6 +31,7 @@ class JobPost(models.Model):
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_LEVEL_CHOICES)
     project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES)
     budget = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    currency = models.CharField(max_length=3, choices=[('KSH', 'KSH'), ('USD', 'USD')], default='KSH')
     duration = models.IntegerField(help_text='Duration in days', validators=[MinValueValidator(1)])
     location = models.CharField(max_length=255, null=True, blank=True)
     remote_work = models.BooleanField(default=False)

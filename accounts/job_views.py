@@ -11,7 +11,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class JobPostViewSet(viewsets.ModelViewSet):
     serializer_class = JobPostSerializer
     permission_classes = [IsAuthenticated]

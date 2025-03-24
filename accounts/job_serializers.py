@@ -19,6 +19,7 @@ class JobPostSerializer(serializers.ModelSerializer):
             'experience_level',
             'project_type',
             'budget',
+            'currency',
             'duration',
             'location',
             'remote_work',
@@ -48,6 +49,21 @@ class JobPostSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError('Budget must be greater than 0')
         return value
+    
+    def validate(self, data):
+        # Get the client's currency preference
+        client = self.context['request'].user
+        if not client.is_authenticated:
+            raise serializers.ValidationError('Authentication required')
+        
+        if client.user_type != 'client':
+            raise serializers.ValidationError('Only clients can post jobs')
+        
+        # Ensure the client has a valid currency setting
+        if client.currency not in ['KSH', 'USD']:
+            raise serializers.ValidationError({'currency': 'Currency must be either KSH or USD'})
+        
+        return data
     
     def validate_duration(self, value):
         if value <= 0:

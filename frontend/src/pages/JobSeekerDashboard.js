@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Container, Grid, Typography, Paper, TextField, Button, Chip, Avatar, Tabs, Tab } from '@mui/material';
+import { Box, Container, Grid, Typography, Paper, TextField, Button, Chip, Avatar, Tabs, Tab, CircularProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 import JobApplications from '../components/job-seeker/JobApplications';
 import SavedJobs from '../components/job-seeker/SavedJobs';
 import NotificationPreferences from '../components/job-seeker/NotificationPreferences';
+import { useJobSeeker } from '../context/JobSeekerContext';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -29,21 +30,8 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 
 const JobSeekerDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
-  const [profile, setProfile] = useState({
-    fullName: 'John Doe',
-    title: 'Full Stack Developer',
-    bio: 'Passionate developer with 5 years of experience in web development...',
-    skills: ['React', 'Node.js', 'Python', 'AWS', 'MongoDB'],
-    hourlyRate: '50',
-    availability: 'Full-time',
-    currency: 'KSH',
-    resume: null,
-    portfolio: null,
-    githubLink: '',
-    linkedinLink: '',
-    personalWebsite: '',
-    portfolioDescription: ''
-  });
+  const { profile, loading, error, updateProfile } = useJobSeeker();
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const [newSkill, setNewSkill] = useState('');
 
@@ -64,9 +52,21 @@ const JobSeekerDashboard = () => {
     }));
   };
 
-  const handleProfileUpdate = () => {
-    // TODO: Implement profile update API call
-    console.log('Updated Profile:', profile);
+  const handleProfileUpdate = async () => {
+    const formData = new FormData();
+    if (selectedImage) {
+      formData.append('profile_picture', selectedImage);
+    }
+    const success = await updateProfile(formData);
+    if (success) {
+      setSelectedImage(null);
+    }
+  };
+
+  const handleImageChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedImage(event.target.files[0]);
+    }
   };
 
   const handleTabChange = (event, newValue) => {
@@ -74,6 +74,26 @@ const JobSeekerDashboard = () => {
   };
 
   const renderProfile = () => {
+    if (loading) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (error) {
+      return (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <Typography color="error">{error}</Typography>
+        </Box>
+      );
+    }
+
+    if (!profile) {
+      return null;
+    }
+
     switch (currentTab) {
       case 0:
         return (
@@ -82,6 +102,7 @@ const JobSeekerDashboard = () => {
               <StyledPaper>
                 <ProfileSection>
                   <Avatar
+                    src={profile.profile_picture}
                     sx={{
                       width: 120,
                       height: 120,
@@ -90,17 +111,36 @@ const JobSeekerDashboard = () => {
                       fontSize: '3rem',
                     }}
                   >
-                    {profile.fullName.charAt(0)}
+                    {profile.first_name ? profile.first_name.charAt(0) : ''}
                   </Avatar>
                   <Typography variant="h5" gutterBottom>
-                    {profile.fullName}
+                    {`${profile.first_name} ${profile.last_name}`}
                   </Typography>
                   <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                    {profile.title}
+                    {profile.profession}
                   </Typography>
-                  <Button variant="outlined" color="primary">
-                    Edit Profile Picture
-                  </Button>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="profile-photo-input"
+                    type="file"
+                    onChange={handleImageChange}
+                  />
+                  <label htmlFor="profile-photo-input">
+                    <Button variant="outlined" color="primary" component="span">
+                      {selectedImage ? 'Change Selected Photo' : 'Edit Profile Picture'}
+                    </Button>
+                  </label>
+                  {selectedImage && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleProfileUpdate}
+                      sx={{ mt: 1 }}
+                    >
+                      Upload New Photo
+                    </Button>
+                  )}
                 </ProfileSection>
 
                 <Box sx={{ mb: 3 }}>
