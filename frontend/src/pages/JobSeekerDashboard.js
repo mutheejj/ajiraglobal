@@ -10,9 +10,15 @@ import { useJobSeeker } from '../context/JobSeekerContext';
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   height: '100%',
-  backgroundColor: '#ffffff',
-  borderRadius: '10px',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+  backgroundColor: theme.palette.background.paper,
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[1],
+  '&:hover': {
+    boxShadow: theme.shadows[2],
+    transition: theme.transitions.create(['box-shadow'], {
+      duration: theme.transitions.duration.short,
+    }),
+  },
 }));
 
 const ProfileSection = styled(Box)(({ theme }) => ({
@@ -31,11 +37,29 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 const JobSeekerDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const { profile: contextProfile, loading, error, updateProfile } = useJobSeeker();
-  const [profile, setProfile] = useState(contextProfile || {});
+  const [profile, setProfile] = useState({
+    skills: [],
+    first_name: '',
+    last_name: '',
+    profession: '',
+    hourlyRate: '',
+    currency: 'KSH',
+    availability: 'Full-time',
+    bio: '',
+    githubLink: '',
+    linkedinLink: '',
+    personalWebsite: '',
+    portfolioDescription: '',
+    ...contextProfile
+  });
 
   useEffect(() => {
     if (contextProfile) {
-      setProfile(contextProfile);
+      setProfile(prev => ({
+        ...prev,
+        ...contextProfile,
+        skills: contextProfile.skills || prev.skills || []
+      }));
     }
   }, [contextProfile]);
   const [selectedImage, setSelectedImage] = useState(null);

@@ -10,6 +10,7 @@ import ClientDashboard from './pages/ClientDashboard';
 import JobSeekerDashboard from './pages/JobSeekerDashboard';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { JobSeekerProvider } from './context/JobSeekerContext';
 import { CssBaseline } from '@mui/material';
 
 function App() {
@@ -17,7 +18,9 @@ function App() {
         <AuthProvider>
             <ThemeProvider>
                 <CssBaseline />
-                <AppContent />
+                <JobSeekerProvider>
+                    <AppContent />
+                </JobSeekerProvider>
             </ThemeProvider>
         </AuthProvider>
     );
