@@ -43,9 +43,11 @@ const Header = () => {
             position: 'sticky',
             top: 0,
             zIndex: 1000,
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            flexWrap: 'wrap',
+            gap: '1rem'
         }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexGrow: 1, minWidth: '200px' }}>
                 <Link to="/" style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -64,7 +66,8 @@ const Header = () => {
                     p: '2px 4px',
                     display: 'flex',
                     alignItems: 'center',
-                    width: 400,
+                    width: { xs: '100%', sm: '400px' },
+                    order: { xs: 3, sm: 'initial' },
                     bgcolor: mode === 'dark' ? 'background.paper' : '#fff',
                     boxShadow: mode === 'dark' ? '0 2px 4px rgba(255,255,255,0.1)' : '0 2px 4px rgba(0,0,0,0.1)'
                 }}
@@ -97,133 +100,129 @@ const Header = () => {
             </Paper>
 
             <nav style={{
-                display: 'flex',
+                display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
                 gap: '2rem'
             }}>
                 <Link to="/" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Home</Link>
                 <Link to="/jobs" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Find Jobs</Link>
                 <Link to="/post-job" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Post Jobs</Link>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <MuiIconButton
-                        onClick={() => toggleTheme(mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light')}
-                        sx={{
-                            color: mode === 'dark' ? '#fff' : '#000',
-                            '&:hover': {
-                                backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                            }
-                        }}
-                    >
-                        {mode === 'light' ? <Brightness4Icon /> :
-                         mode === 'dark' ? <SettingsBrightnessIcon /> :
-                         <Brightness7Icon />}
-                    </MuiIconButton>
-                    
-                    {user ? (
-                        <>
-                            <IconButton
-                                onClick={handleProfileMenuOpen}
-                                size="large"
-                                edge="end"
-                                aria-label="account of current user"
-                                aria-haspopup="true"
-                                sx={{
-                                    color: mode === 'dark' ? '#fff' : '#000',
-                                    '&:hover': {
-                                        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                                    }
-                                }}
-                            >
-                                {user.avatar ? (
-                                    <Avatar src={user.avatar} alt={user.name} />
-                                ) : (
-                                    <AccountCircleIcon />
-                                )}
-                            </IconButton>
-                            <Menu
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl)}
-                                onClose={handleProfileMenuClose}
-                                onClick={handleProfileMenuClose}
-                                PaperProps={{
-                                    sx: {
-                                        bgcolor: mode === 'dark' ? '#121212' : '#fff',
-                                        color: mode === 'dark' ? '#fff' : '#000'
-                                    }
-                                }}
-                            >
-                                <MenuItem 
-                                    component={Link} 
-                                    to={user.userType === 'client' ? '/client-dashboard' : '/job-seeker-dashboard'}
-                                    sx={{
-                                        color: mode === 'dark' ? '#fff' : '#000',
-                                        '&:hover': {
-                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                                        }
-                                    }}
-                                >
-                                    Dashboard
-                                </MenuItem>
-                                <MenuItem 
-                                    component={Link} 
-                                    to="/profile"
-                                    sx={{
-                                        color: mode === 'dark' ? '#fff' : '#000',
-                                        '&:hover': {
-                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                                        }
-                                    }}
-                                >
-                                    Profile
-                                </MenuItem>
-                                <MenuItem 
-                                    onClick={handleLogout}
-                                    sx={{
-                                        color: mode === 'dark' ? '#fff' : '#000',
-                                        '&:hover': {
-                                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                                        }
-                                    }}
-                                >
-                                    Logout
-                                </MenuItem>
-                            </Menu>
-                        </>
-                    ) : (
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <Link 
-                                to="/login" 
-                                style={{ 
-                                    color: mode === 'dark' ? '#fff' : '#000',
-                                    textDecoration: 'none',
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: '4px',
-                                    transition: 'all 0.3s ease'
-                                }}
-                            >
-                                Login
-                            </Link>
-                            <Link 
-                                to="/signup" 
-                                style={{ 
-                                    color: '#fff',
-                                    backgroundColor: '#1976d2',
-                                    textDecoration: 'none',
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: '4px',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        backgroundColor: '#1565c0'
-                                    }
-                                }}
-                            >
-                                Sign Up
-                            </Link>
-                        </div>
-                    )}
-                </div>
             </nav>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: 'auto' }}>
+                <MuiIconButton
+                    onClick={() => toggleTheme(mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light')}
+                    sx={{
+                        color: mode === 'dark' ? '#fff' : '#000',
+                        '&:hover': {
+                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                        }
+                    }}
+                >
+                    {mode === 'light' ? <Brightness4Icon /> :
+                     mode === 'dark' ? <SettingsBrightnessIcon /> :
+                     <Brightness7Icon />}
+                </MuiIconButton>
+                
+                {user ? (
+                    <>
+                        <IconButton
+                            onClick={handleProfileMenuOpen}
+                            size="large"
+                            edge="end"
+                            aria-label="account of current user"
+                            aria-haspopup="true"
+                            sx={{
+                                color: mode === 'dark' ? '#fff' : '#000',
+                                '&:hover': {
+                                    backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                                }
+                            }}
+                        >
+                            {user.avatar ? (
+                                <Avatar src={user.avatar} alt={user.name} />
+                            ) : (
+                                <AccountCircleIcon />
+                            )}
+                        </IconButton>
+                    </>
+                ) : (
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <Link 
+                            to="/login" 
+                            style={{ 
+                                color: mode === 'dark' ? '#fff' : '#000',
+                                textDecoration: 'none',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '4px',
+                                border: `1px solid ${mode === 'dark' ? '#fff' : '#000'}`
+                            }}
+                        >
+                            Login
+                        </Link>
+                        <Link 
+                            to="/signup"
+                            style={{ 
+                                color: mode === 'dark' ? '#000' : '#fff',
+                                backgroundColor: mode === 'dark' ? '#fff' : '#000',
+                                textDecoration: 'none',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '4px'
+                            }}
+                        >
+                            Sign Up
+                        </Link>
+                    </div>
+                )}
+            </div>
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleProfileMenuClose}
+                onClick={handleProfileMenuClose}
+                PaperProps={{
+                    sx: {
+                        bgcolor: mode === 'dark' ? '#121212' : '#fff',
+                        color: mode === 'dark' ? '#fff' : '#000'
+                    }
+                }}
+            >
+                <MenuItem 
+                    component={Link} 
+                    to={user.userType === 'client' ? '/client-dashboard' : '/job-seeker-dashboard'}
+                    sx={{
+                        color: mode === 'dark' ? '#fff' : '#000',
+                        '&:hover': {
+                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                        }
+                    }}
+                >
+                    Dashboard
+                </MenuItem>
+                <MenuItem 
+                    component={Link} 
+                    to="/profile"
+                    sx={{
+                        color: mode === 'dark' ? '#fff' : '#000',
+                        '&:hover': {
+                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                        }
+                    }}
+                >
+                    Profile
+                </MenuItem>
+                <MenuItem 
+                    onClick={handleLogout}
+                    sx={{
+                        color: mode === 'dark' ? '#fff' : '#000',
+                        '&:hover': {
+                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                        }
+                    }}
+                >
+                    Logout
+                </MenuItem>
+            </Menu>
         </header>
     );
 };

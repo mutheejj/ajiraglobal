@@ -187,24 +187,28 @@ const ClientDashboard = () => {
     try {
       const formData = new FormData();
       
-      // Convert budget values to valid decimal numbers
-      const budget = jobForm.payment_type === 'fixed' 
-        ? parseFloat(jobForm.budget_min).toFixed(2)
-        : parseFloat(jobForm.budget).toFixed(2);
+      // Format budget values
+      const budget_min = jobForm.payment_type === 'fixed' 
+        ? parseFloat(jobForm.budget_min || 0).toFixed(2)
+        : '';
+      const budget_max = jobForm.payment_type === 'fixed'
+        ? parseFloat(jobForm.budget_max || 0).toFixed(2)
+        : '';
       
       // Append all job data
       Object.keys(jobForm).forEach(key => {
-        if (key === 'attachments') {
+        if (key === 'attachments' && jobForm[key]) {
           jobForm.attachments.forEach(file => {
             formData.append('attachments', file);
           });
         } else if (key === 'skills') {
-          formData.append('skills', JSON.stringify(jobForm.skills));
-        } else if (key === 'budget_min' || key === 'budget_max') {
-          // Skip these as we're using the calculated budget
-          return;
-        } else {
-          formData.append(key, key === 'budget' ? budget : jobForm[key]);
+          formData.append('skills', JSON.stringify(jobForm.skills || []));
+        } else if (key === 'budget_min') {
+          formData.append('budget_min', budget_min);
+        } else if (key === 'budget_max') {
+          formData.append('budget_max', budget_max);
+        } else if (jobForm[key] !== undefined && jobForm[key] !== null) {
+          formData.append(key, jobForm[key]);
         }
       });
       

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Box, Container, Grid, Typography, Paper, TextField, MenuItem, Chip, InputAdornment } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Grid, Typography, Paper, TextField, MenuItem, Chip, InputAdornment, CircularProgress, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import WorkIcon from '@mui/icons-material/Work';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import JobAPI from '../services/JobAPI';
 
 const categories = [
   'All Categories',
@@ -44,36 +45,43 @@ const FilterChip = styled(Chip)(({ theme }) => ({
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await JobAPI.getAllJobs();
+        setJobs(data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch jobs. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
 
 
-  // Mock job data - replace with API call
-  const jobs = [
-    {
-      id: 1,
-      title: 'Full Stack Web Developer Needed',
-      category: 'Web Development',
-      description: 'Looking for an experienced full stack developer to build a modern web application...',
-      budget: 3000,
-      duration: '30 days',
-      skills: ['React', 'Node.js', 'MongoDB'],
-      experienceLevel: 'Intermediate',
-      projectType: 'One-time',
-      postedDate: '2 days ago',
-    },
-    {
-      id: 2,
-      title: 'Mobile App UI Designer',
-      category: 'UI/UX Design',
-      description: 'Need a creative UI designer for a new mobile app project...',
-      budget: 2000,
-      duration: '20 days',
-      skills: ['Figma', 'Mobile Design', 'iOS', 'Android'],
-      experienceLevel: 'Expert',
-      projectType: 'One-time',
-      postedDate: '1 day ago',
-    },
-    // Add more mock jobs here
-  ];
 
   const handleCategoryChange = (event) => {
     setSelectedCategory(event.target.value);
@@ -184,7 +192,7 @@ const Home = () => {
                   <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AttachMoneyIcon color="primary" />
-                      <Typography variant="body2">${job.budget}</Typography>
+                      <Typography variant="body2">{job.currency} {job.budget}</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AccessTimeIcon color="primary" />

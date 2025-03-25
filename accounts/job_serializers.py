@@ -46,9 +46,14 @@ class JobPostSerializer(serializers.ModelSerializer):
         return value
     
     def validate_budget(self, value):
-        if value <= 0:
-            raise serializers.ValidationError('Budget must be greater than 0')
-        return value
+        from decimal import Decimal
+        try:
+            value = Decimal(str(value))
+            if value <= 0:
+                raise serializers.ValidationError('Budget must be greater than 0')
+            return value
+        except (TypeError, ValueError):
+            raise serializers.ValidationError('Budget must be a valid decimal number')
     
     def validate(self, data):
         # Get the client's currency preference

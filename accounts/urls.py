@@ -7,9 +7,11 @@ from rest_framework.routers import DefaultRouter
 from .views import RegisterView, VerifyEmailView
 from .auth import LoginView
 from .job_views import JobPostViewSet
+from .job_seeker_views import JobSeekerProfileViewSet
 
 router = DefaultRouter()
 router.register(r'jobs', JobPostViewSet, basename='jobs')
+router.register(r'profile/job-seeker', JobSeekerProfileViewSet, basename='job-seeker-profile')
 
 class GetCSRFToken(View):
     @method_decorator(ensure_csrf_cookie)
