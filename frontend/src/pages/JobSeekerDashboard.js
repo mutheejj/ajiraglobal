@@ -5,6 +5,7 @@ import { styled } from '@mui/material/styles';
 import JobApplications from '../components/job-seeker/JobApplications';
 import SavedJobs from '../components/job-seeker/SavedJobs';
 import NotificationPreferences from '../components/job-seeker/NotificationPreferences';
+import OngoingProjects from '../components/job-seeker/OngoingProjects';
 import { useJobSeeker } from '../context/JobSeekerContext';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -391,6 +392,8 @@ const JobSeekerDashboard = () => {
       case 2:
         return <SavedJobs />;
       case 3:
+        return <OngoingProjects />;
+      case 4:
         return (
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
@@ -403,17 +406,17 @@ const JobSeekerDashboard = () => {
                 </Typography>
                 {/* Recommended jobs will be implemented here */}
               </StyledPaper>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <StyledPaper>
-                <Typography variant="h6" gutterBottom>
-                  Learning Resources
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Enhance your skills with these resources
-                </Typography>
-                {/* Learning resources will be implemented here */}
-              </StyledPaper>
+              <Box sx={{ mt: 3 }}>
+                <StyledPaper>
+                  <Typography variant="h6" gutterBottom>
+                    Learning Resources
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Enhance your skills with these resources
+                  </Typography>
+                  {/* Learning resources will be implemented here */}
+                </StyledPaper>
+              </Box>
             </Grid>
           </Grid>
         );
@@ -429,6 +432,7 @@ const JobSeekerDashboard = () => {
           <Tab label="Profile" />
           <Tab label="Applications" />
           <Tab label="Saved Jobs" />
+          <Tab label="Projects" />
           <Tab label="Recommendations" />
         </Tabs>
       </Box>

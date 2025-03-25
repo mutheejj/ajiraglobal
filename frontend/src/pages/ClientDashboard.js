@@ -187,6 +187,11 @@ const ClientDashboard = () => {
     try {
       const formData = new FormData();
       
+      // Convert budget values to valid decimal numbers
+      const budget = jobForm.payment_type === 'fixed' 
+        ? parseFloat(jobForm.budget_min).toFixed(2)
+        : parseFloat(jobForm.budget).toFixed(2);
+      
       // Append all job data
       Object.keys(jobForm).forEach(key => {
         if (key === 'attachments') {
@@ -195,8 +200,11 @@ const ClientDashboard = () => {
           });
         } else if (key === 'skills') {
           formData.append('skills', JSON.stringify(jobForm.skills));
+        } else if (key === 'budget_min' || key === 'budget_max') {
+          // Skip these as we're using the calculated budget
+          return;
         } else {
-          formData.append(key, jobForm[key]);
+          formData.append(key, key === 'budget' ? budget : jobForm[key]);
         }
       });
       
