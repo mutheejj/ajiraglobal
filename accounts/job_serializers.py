@@ -49,7 +49,8 @@ class JobPostSerializer(serializers.ModelSerializer):
         from decimal import Decimal
         try:
             value = Decimal(str(value))
-            if value <= 0:
+            min_value = Decimal('0')
+            if value <= min_value:
                 raise serializers.ValidationError('Budget must be greater than 0')
             return value
         except (TypeError, ValueError):

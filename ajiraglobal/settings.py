@@ -28,6 +28,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['192.168.16.101', '127.0.0.1', 'localhost', ' https://157c-102-210-40-222.ngrok-free.app', 'cbf2-102-210-40-222.ngrok-free.app' ]
 
+# Frontend URL Configuration
+FRONTEND_URL = 'http://localhost:3000'  # Update this in production
+
 
 # Application definition
 

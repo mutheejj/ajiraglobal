@@ -1,7 +1,12 @@
 import Home from '../pages/Home';
 import About from '../pages/About';
-import Login from '../pages/Login';
-import Signup from '../pages/Signup';
+import Login from '../pages/login';
+import Signup from '../pages/signup';
+import ForgotPassword from '../pages/forgot-password';
+import ClientDashboard from '../pages/ClientDashboard';
+import JobSeekerDashboard from '../pages/JobSeekerDashboard';
+import PaymentPage from '../pages/PaymentPage';
+import ChatRoute from './ChatRoute';
 
 export const routes = [
     {
@@ -20,6 +25,14 @@ export const routes = [
     {
         path: '/signup',
         element: Signup
+    },
+    {
+        path: '/payment',
+        element: PaymentPage
+    },
+    {
+        path: '/chat',
+        element: ChatRoute
     }
 ];
 

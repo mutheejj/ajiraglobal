@@ -111,7 +111,7 @@ const ClientDashboard = () => {
       if (!token) {
         throw new Error('No authentication token found');
       }
-      const response = await axios.get('/api/auth/me/', {
+      const response = await axios.get('/api/company/profile/', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const userData = response.data;
@@ -178,7 +178,9 @@ const ClientDashboard = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      await axios.put('/api/profile/client/update_profile/', companyProfile, {
+      const formData = new FormData();
+Object.entries(companyProfile).forEach(([key, value]) => formData.append(key, value));
+await axios.put('/api/company/profile/', formData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setEditProfile(false);
@@ -293,26 +295,32 @@ const ClientDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
     // Basic validation
     if (!jobForm.title.trim()) {
       setError('Job title is required');
+      setLoading(false);
       return;
     }
     if (!jobForm.category) {
       setError('Please select a category');
+      setLoading(false);
       return;
     }
     if (!jobForm.description.trim()) {
       setError('Job description is required');
+      setLoading(false);
       return;
     }
     if (!jobForm.budget || Number(jobForm.budget) <= 0) {
       setError('Please specify a valid budget');
+      setLoading(false);
       return;
     }
     if (!jobForm.duration) {
       setError('Please specify project duration');
+      setLoading(false);
       return;
     }
     
@@ -327,20 +335,25 @@ const ClientDashboard = () => {
       const token = localStorage.getItem('token');
       await axios.post('/api/jobs/', jobData, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
+      setSuccessMessage('Job posted successfully!');
       handleDialogClose();
-      fetchJobs();
+      await fetchJobs();
     } catch (error) {
       console.error('Error posting job:', error);
-      setError(error.response?.data?.message || 'Failed to create job. Please try again.');
+      setError(error.response?.data?.detail || 'Failed to create job. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSaveAsDraft = async () => {
     try {
+      setLoading(true);
       const jobData = {
         ...jobForm,
         status: 'draft'
@@ -348,27 +361,39 @@ const ClientDashboard = () => {
       const token = localStorage.getItem('token');
       await axios.post('/api/jobs/', jobData, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
+      setSuccessMessage('Job saved as draft successfully!');
       handleDialogClose();
-      fetchJobs();
+      await fetchJobs();
     } catch (error) {
       console.error('Error saving draft:', error);
+      setError(error.response?.data?.detail || 'Failed to save job as draft');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleStatusChange = async (jobId, newStatus) => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      await axios.post(`/api/jobs/${jobId}/change_status/`, { status: newStatus }, {
+      await axios.patch(`/api/jobs/${jobId}/`, { status: newStatus }, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
-      fetchJobs();
+      setSuccessMessage(`Job status updated to ${newStatus} successfully`);
+      await fetchJobs();
     } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Failed to update job status';
+      setError(errorMessage);
       console.error('Error changing job status:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -630,6 +655,195 @@ const ClientDashboard = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Job Creation Dialog */}
+      <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
+        <DialogTitle>Post New Job</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Job Title"
+                name="title"
+                value={jobForm.title}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                label="Category"
+                name="category"
+                value={jobForm.category}
+                onChange={handleFormChange}
+                required
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {category}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Job Description"
+                name="description"
+                value={jobForm.description}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Requirements"
+                name="requirements"
+                value={jobForm.requirements}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Skills"
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSkillAdd();
+                  }
+                }}
+                helperText="Press Enter to add a skill"
+              />
+              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {jobForm.skills.map((skill) => (
+                  <Chip
+                    key={skill}
+                    label={skill}
+                    onDelete={() => handleSkillDelete(skill)}
+                  />
+                ))}
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                label="Experience Level"
+                name="experience_level"
+                value={jobForm.experience_level}
+                onChange={handleFormChange}
+              >
+                <MenuItem value="entry">Entry Level</MenuItem>
+                <MenuItem value="intermediate">Intermediate</MenuItem>
+                <MenuItem value="expert">Expert</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                fullWidth
+                label="Project Type"
+                name="project_type"
+                value={jobForm.project_type}
+                onChange={handleFormChange}
+              >
+                <MenuItem value="full_time">Full Time</MenuItem>
+                <MenuItem value="part_time">Part Time</MenuItem>
+                <MenuItem value="contract">Contract</MenuItem>
+                <MenuItem value="freelance">Freelance</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Budget"
+                name="budget"
+                value={jobForm.budget}
+                onChange={handleFormChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <TextField
+                        select
+                        value={jobForm.currency}
+                        onChange={(e) => setJobForm(prev => ({ ...prev, currency: e.target.value }))}
+                        variant="standard"
+                        sx={{ width: '70px' }}
+                      >
+                        <MenuItem value="KSH">KSH</MenuItem>
+                        <MenuItem value="USD">USD</MenuItem>
+                      </TextField>
+                    </InputAdornment>
+                  ),
+                }}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Duration (days)"
+                name="duration"
+                value={jobForm.duration}
+                onChange={handleFormChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Location"
+                name="location"
+                value={jobForm.location}
+                onChange={handleFormChange}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={jobForm.remote_work}
+                    onChange={(e) => setJobForm(prev => ({ ...prev, remote_work: e.target.checked }))}
+                    name="remote_work"
+                  />
+                }
+                label="Remote Work Available"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button
+            onClick={handleSaveAsDraft}
+            disabled={loading}
+            variant="outlined"
+          >
+            Save as Draft
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            variant="contained"
+          >
+            Post Job
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Active Job Listings Section */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>

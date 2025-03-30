@@ -128,7 +128,7 @@ const SavedJobs = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <CircularProgress />
         </Box>
-      ) : !savedJobs?.length ? (
+      ) : !Array.isArray(savedJobs) || !savedJobs?.length ? (
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Typography variant="body1" color="text.secondary" gutterBottom>
             You haven't saved any jobs yet.

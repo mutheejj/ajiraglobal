@@ -17,6 +17,15 @@ logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'user_type', 'company_name', 'industry', 'company_size',
+                 'website', 'description', 'first_name', 'last_name', 'profession',
+                 'experience', 'skills', 'bio', 'github_link', 'linkedin_link',
+                 'personal_website', 'portfolio_description']
+        read_only_fields = ['id', 'email', 'user_type']
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True)

@@ -9,10 +9,12 @@ from .auth import LoginView
 from .job_views import JobPostViewSet
 from .job_seeker_views import JobSeekerProfileViewSet
 from .saved_jobs_views import SavedJobViewSet
+from .client_views import ClientProfileViewSet
 
 router = DefaultRouter()
 router.register(r'jobs', JobPostViewSet, basename='jobs')
 router.register(r'profile/job-seeker', JobSeekerProfileViewSet, basename='job-seeker-profile')
+router.register(r'profile/client', ClientProfileViewSet, basename='client-profile')
 router.register(r'jobs/saved', SavedJobViewSet, basename='saved-jobs')
 
 class GetCSRFToken(View):
