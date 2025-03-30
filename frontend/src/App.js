@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { JobSeekerProvider } from './context/JobSeekerContext';
 import { SavedJobsProvider } from './context/SavedJobsContext';
+import PostJob from './components/PostJob';
 import { CssBaseline } from '@mui/material';
 
 function App() {
@@ -67,7 +68,10 @@ function AppContent() {
                             ) : (
                                 <Navigate to="/login" replace />
                             )
-                        } 
+                        }
+                    />
+                    <Route path="/jobs" element={<Home />} />
+                    <Route path="/post-job" element={<PostJob />} 
                     />
                     <Route 
                         path="/payment" 

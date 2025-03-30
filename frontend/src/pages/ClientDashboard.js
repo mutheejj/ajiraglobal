@@ -67,9 +67,9 @@ const ClientDashboard = () => {
     offersExtended: 0
   });
   const [companyProfile, setCompanyProfile] = useState({
-    name: '',
+    company_name: '',
     industry: '',
-    size: '',
+    company_size: '',
     location: '',
     description: '',
     website: '',
@@ -108,14 +108,33 @@ const ClientDashboard = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/company/profile/', {
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const response = await axios.get('/api/auth/me/', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      setCompanyProfile(response.data);
+      const userData = response.data;
+      setCompanyProfile({
+        company_name: userData.company_name || '',
+        industry: userData.industry || '',
+        company_size: userData.company_size || '',
+        location: userData.location || '',
+        description: userData.description || '',
+        website: userData.website || '',
+        logo: userData.logo || null
+      });
       setError('');
     } catch (error) {
-      setError('Failed to fetch company profile');
+      const errorMessage = error.response?.status === 401 
+        ? 'Session expired. Please login again.'
+        : error.message || 'Failed to fetch company profile';
+      setError(errorMessage);
       console.error('Error fetching company profile:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     } finally {
       setLoading(false);
     }
@@ -159,14 +178,16 @@ const ClientDashboard = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      await axios.put('/api/company/profile/', companyProfile, {
+      await axios.put('/api/profile/client/update_profile/', companyProfile, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setEditProfile(false);
       setSuccessMessage('Company profile updated successfully');
+      await fetchCompanyProfile();
       setError('');
     } catch (error) {
-      setError('Failed to update company profile');
+      const errorMessage = error.response?.data?.detail || 'Failed to update company profile';
+      setError(errorMessage);
       console.error('Error updating company profile:', error);
     } finally {
       setLoading(false);
@@ -353,6 +374,110 @@ const ClientDashboard = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Company Profile Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5">Company Profile</Typography>
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => setEditProfile(!editProfile)}
+          >
+            {editProfile ? 'Cancel' : 'Edit Profile'}
+          </Button>
+        </Box>
+
+        {editProfile ? (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Company Name"
+                value={companyProfile.company_name}
+                onChange={(e) => setCompanyProfile(prev => ({ ...prev, company_name: e.target.value }))}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Industry"
+                value={companyProfile.industry}
+                onChange={(e) => setCompanyProfile(prev => ({ ...prev, industry: e.target.value }))}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Company Size"
+                value={companyProfile.company_size}
+                onChange={(e) => setCompanyProfile(prev => ({ ...prev, company_size: e.target.value }))}
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Location"
+                value={companyProfile.location}
+                onChange={(e) => setCompanyProfile(prev => ({ ...prev, location: e.target.value }))}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Website"
+                value={companyProfile.website}
+                onChange={(e) => setCompanyProfile(prev => ({ ...prev, website: e.target.value }))}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                label="Company Description"
+                value={companyProfile.description}
+                onChange={(e) => setCompanyProfile(prev => ({ ...prev, description: e.target.value }))}
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button
+                variant="contained"
+                onClick={handleProfileUpdate}
+                disabled={loading}
+              >
+                Save Changes
+              </Button>
+            </Grid>
+          </Grid>
+        ) : (
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" color="text.secondary">Company Name</Typography>
+              <Typography variant="body1" paragraph>{companyProfile.company_name || 'Not specified'}</Typography>
+
+              <Typography variant="subtitle1" color="text.secondary">Industry</Typography>
+              <Typography variant="body1" paragraph>{companyProfile.industry || 'Not specified'}</Typography>
+
+              <Typography variant="subtitle1" color="text.secondary">Company Size</Typography>
+              <Typography variant="body1" paragraph>{companyProfile.company_size || 'Not specified'}</Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" color="text.secondary">Location</Typography>
+              <Typography variant="body1" paragraph>{companyProfile.location || 'Not specified'}</Typography>
+
+              <Typography variant="subtitle1" color="text.secondary">Website</Typography>
+              <Typography variant="body1" paragraph>
+                {companyProfile.website ? (
+                  <a href={companyProfile.website} target="_blank" rel="noopener noreferrer">
+                    {companyProfile.website}
+                  </a>
+                ) : 'Not specified'}
+              </Typography>
+
+              <Typography variant="subtitle1" color="text.secondary">Description</Typography>
+              <Typography variant="body1" paragraph>{companyProfile.description || 'Not specified'}</Typography>
+            </Grid>
+          </Grid>
+        )}
+      </Paper>
       {/* Notification System */}
       <Snackbar
         open={!!successMessage}

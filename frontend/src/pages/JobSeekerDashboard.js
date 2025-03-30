@@ -43,6 +43,7 @@ const JobSeekerDashboard = () => {
     skills: [],
     first_name: '',
     last_name: '',
+    email: '',
     profession: '',
     hourlyRate: '',
     currency: 'KSH',
