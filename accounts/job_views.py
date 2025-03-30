@@ -1,7 +1,7 @@
 from rest_framework import status, viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action, permission_classes
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .jobs import JobPost
@@ -13,15 +13,21 @@ logger = logging.getLogger(__name__)
 
 class JobPostViewSet(viewsets.ModelViewSet):
     serializer_class = JobPostSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
     
     def get_queryset(self):
-        if not self.request.user.is_authenticated:
-            return JobPost.objects.none()
-        user = self.request.user
-        if user.user_type == 'client':
-            return JobPost.objects.filter(client=user)
-        return JobPost.objects.filter(status='active')
+        if self.action in ['list', 'retrieve']:
+            return JobPost.objects.filter(status='active')
+        elif self.request.user.is_authenticated:
+            if self.request.user.user_type == 'client':
+                return JobPost.objects.filter(client=self.request.user)
+            return JobPost.objects.filter(status='active')
+        return JobPost.objects.none()
     
     def perform_create(self, serializer):
         if not hasattr(self.request.user, 'user_type') or self.request.user.user_type != 'client':

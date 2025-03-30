@@ -1,17 +1,27 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from .models import User
-from .serializers import UserRegistrationSerializer
+from .serializers import UserRegistrationSerializer, JobSeekerPublicSerializer
 
 class JobSeekerProfileViewSet(viewsets.ModelViewSet):
-    serializer_class = UserRegistrationSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return JobSeekerPublicSerializer
+        return UserRegistrationSerializer
     
     def get_queryset(self):
-        # Return only the current user's profile
+        if self.action in ['list', 'retrieve']:
+            return User.objects.filter(user_type='job-seeker')
         return User.objects.filter(id=self.request.user.id)
     
     def get_object(self):

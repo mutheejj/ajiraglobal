@@ -47,7 +47,7 @@ const Header = () => {
             flexWrap: 'wrap',
             gap: '1rem'
         }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexGrow: 1, minWidth: '200px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexGrow: { xs: 0, sm: 1 }, minWidth: { xs: 'auto', sm: '200px' } }}>
                 <Link to="/" style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
@@ -102,14 +102,15 @@ const Header = () => {
             <nav style={{
                 display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
-                gap: '2rem'
+                gap: '2rem',
+                order: 3
             }}>
                 <Link to="/" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Home</Link>
                 <Link to="/jobs" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Find Jobs</Link>
                 <Link to="/post-job" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Post Jobs</Link>
             </nav>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: { xs: 0, sm: 'auto' } }}>
                 <MuiIconButton
                     onClick={() => toggleTheme(mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light')}
                     sx={{
@@ -189,7 +190,7 @@ const Header = () => {
             >
                 <MenuItem 
                     component={Link} 
-                    to={user.userType === 'client' ? '/client-dashboard' : '/job-seeker-dashboard'}
+                    to={user?.user_type === 'client' ? '/client-dashboard' : '/job-seeker-dashboard'}
                     sx={{
                         color: mode === 'dark' ? '#fff' : '#000',
                         '&:hover': {

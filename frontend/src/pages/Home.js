@@ -53,10 +53,14 @@ const Home = () => {
     const fetchJobs = async () => {
       try {
         const data = await JobAPI.getAllJobs();
+        if (!Array.isArray(data)) {
+          throw new Error('Invalid data format received');
+        }
         setJobs(data);
         setError(null);
       } catch (err) {
-        setError('Failed to fetch jobs. Please try again later.');
+        setError(err.message || 'Failed to fetch jobs. Please try again later.');
+        setJobs([]);
       } finally {
         setLoading(false);
       }
@@ -92,30 +96,34 @@ const Home = () => {
   };
 
   const filteredJobs = jobs.filter(job => {
-    const matchesCategory = selectedCategory === 'All Categories' || job.category === selectedCategory;
-    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         job.description.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!job) return false;
+    const matchesCategory = selectedCategory === 'All Categories' || 
+      (job.category && job.category === selectedCategory);
+    const matchesSearch = searchQuery === '' || (
+      (job.title && job.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.description && job.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.company_name && job.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
     return matchesCategory && matchesSearch;
   });
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Find Your Perfect Project
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          Find Your Dream Job
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          Browse through thousands of projects posted by clients worldwide
+        <Typography variant="subtitle1" color="text.secondary" align="center" gutterBottom>
+          Discover opportunities that match your skills and aspirations
         </Typography>
       </Box>
 
-      {/* Search and Filter Section */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={8}>
           <TextField
             fullWidth
-            placeholder="Search for projects..."
+            variant="outlined"
+            placeholder="Search for jobs..."
             value={searchQuery}
             onChange={handleSearchChange}
             InputProps={{
@@ -127,10 +135,11 @@ const Home = () => {
             }}
           />
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={4}>
           <TextField
-            fullWidth
             select
+            fullWidth
+            variant="outlined"
             value={selectedCategory}
             onChange={handleCategoryChange}
             InputProps={{
@@ -150,71 +159,50 @@ const Home = () => {
         </Grid>
       </Grid>
 
-      {/* Active Filters */}
-      <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap' }}>
-        {selectedCategory !== 'All Categories' && (
-          <FilterChip
-            label={selectedCategory}
-            onDelete={() => setSelectedCategory('All Categories')}
-          />
-        )}
-      </Box>
-
-      {/* Job Listings */}
-      <Grid container spacing={3}>
-        {filteredJobs.map((job) => (
-          <Grid item xs={12} key={job.id}>
-            <StyledJobCard>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
-                    {job.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {job.description}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    {job.skills.map((skill) => (
-                      <Chip
-                        key={skill}
-                        label={skill}
+      {filteredJobs.length > 0 ? (
+        <Grid container spacing={3}>
+          {filteredJobs.map((job) => (
+            <Grid item xs={12} key={job.id}>
+              <StyledJobCard>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={8}>
+                    <Typography variant="h6" gutterBottom>
+                      {job.title}
+                    </Typography>
+                    <Typography variant="subtitle1" color="primary" gutterBottom>
+                      {job.company_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      {job.description?.substring(0, 200)}...
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <FilterChip
+                        icon={<WorkIcon />}
+                        label={job.category}
                         size="small"
-                        variant="outlined"
                       />
-                    ))}
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', gap: 3, mt: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AttachMoneyIcon color="primary" />
-                      <Typography variant="body2">{job.currency} {job.budget}</Typography>
+                      <FilterChip
+                        icon={<AttachMoneyIcon />}
+                        label={`${job.currency} ${job.salary_min} - ${job.salary_max}`}
+                        size="small"
+                      />
+                      <FilterChip
+                        icon={<AccessTimeIcon />}
+                        label={new Date(job.created_at).toLocaleDateString()}
+                        size="small"
+                      />
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AccessTimeIcon color="primary" />
-                      <Typography variant="body2">{job.duration}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <WorkIcon color="primary" />
-                      <Typography variant="body2">{job.experienceLevel}</Typography>
-                    </Box>
-                  </Box>
+                  </Grid>
                 </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="caption" color="text.secondary">
-                    Posted {job.postedDate}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </StyledJobCard>
-          </Grid>
-        ))}
-      </Grid>
+              </StyledJobCard>
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Typography variant="h6" align="center" color="text.secondary">
+          No jobs found matching your criteria
+        </Typography>
+      )}
     </Container>
   );
 };

@@ -6,6 +6,13 @@ from django.core.exceptions import ValidationError
 from .models import EmailVerification
 import logging
 
+class JobSeekerPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ['id', 'first_name', 'last_name', 'profession', 'experience', 'skills', 'bio',
+                  'github_link', 'linkedin_link', 'personal_website', 'portfolio_description']
+        read_only_fields = fields  # Make all fields read-only for public access
+
 logger = logging.getLogger(__name__)
 
 User = get_user_model()

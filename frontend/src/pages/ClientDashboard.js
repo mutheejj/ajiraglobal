@@ -69,14 +69,82 @@ const ClientDashboard = () => {
     offersExtended: 0
   });
   const [companyProfile, setCompanyProfile] = useState({
-    name: 'Your Company Name',
-    industry: 'Technology',
-    size: '50-100',
-    location: 'New York, USA',
-    description: 'A leading technology company...',
-    website: 'www.yourcompany.com',
+    name: '',
+    industry: '',
+    size: '',
+    location: '',
+    description: '',
+    website: '',
     logo: null
   });
+  const [editProfile, setEditProfile] = useState(false);
+  const [recruitmentSettings, setRecruitmentSettings] = useState({
+    autoScreening: false,
+    notificationPreferences: {
+      email: true,
+      inApp: true
+    },
+    applicationDeadlineDefault: 30,
+    interviewStages: ['Initial', 'Technical', 'Final'],
+    customFields: []
+  });
+  const [editSettings, setEditSettings] = useState(false);
+  const [recentApplications, setRecentApplications] = useState([]);
+
+  useEffect(() => {
+    fetchCompanyProfile();
+    fetchRecruitmentSettings();
+    fetchRecentApplications();
+  }, []);
+
+  const fetchCompanyProfile = async () => {
+    try {
+      const response = await companyService.getCompanyProfile();
+      setCompanyProfile(response);
+    } catch (error) {
+      console.error('Error fetching company profile:', error);
+    }
+  };
+
+  const fetchRecruitmentSettings = async () => {
+    try {
+      const response = await companyService.getRecruitmentSettings();
+      setRecruitmentSettings(response);
+    } catch (error) {
+      console.error('Error fetching recruitment settings:', error);
+    }
+  };
+
+  const fetchRecentApplications = async () => {
+    try {
+      const response = await companyService.getRecentApplications();
+      setRecentApplications(response);
+    } catch (error) {
+      console.error('Error fetching recent applications:', error);
+    }
+  };
+
+  const handleProfileUpdate = async () => {
+    try {
+      await companyService.updateCompanyProfile(companyProfile);
+      setEditProfile(false);
+      setSuccessMessage('Company profile updated successfully');
+    } catch (error) {
+      setError('Failed to update company profile');
+      console.error('Error updating company profile:', error);
+    }
+  };
+
+  const handleSettingsUpdate = async () => {
+    try {
+      await companyService.updateRecruitmentSettings(recruitmentSettings);
+      setEditSettings(false);
+      setSuccessMessage('Recruitment settings updated successfully');
+    } catch (error) {
+      setError('Failed to update recruitment settings');
+      console.error('Error updating recruitment settings:', error);
+    }
+  };
   const [recruitmentMetrics, setRecruitmentMetrics] = useState([
     { name: 'Jan', applications: 65, interviews: 28, offers: 15 },
     { name: 'Feb', applications: 59, interviews: 32, offers: 20 },
@@ -187,13 +255,16 @@ const ClientDashboard = () => {
     try {
       const formData = new FormData();
       
-      // Format budget values
-      const budget_min = jobForm.payment_type === 'fixed' 
-        ? parseFloat(jobForm.budget_min || 0).toFixed(2)
-        : '';
-      const budget_max = jobForm.payment_type === 'fixed'
-        ? parseFloat(jobForm.budget_max || 0).toFixed(2)
-        : '';
+      // Format budget values for fixed payment type
+      if (jobForm.payment_type === 'fixed') {
+        // Convert to number and ensure positive values
+        const minBudget = Math.max(0, Number(jobForm.budget_min));
+        const maxBudget = Math.max(0, Number(jobForm.budget_max));
+        
+        // Format as decimal with exactly 2 decimal places
+        formData.append('budget_min', minBudget.toFixed(2));
+        formData.append('budget_max', maxBudget.toFixed(2));
+      }
       
       // Append all job data
       Object.keys(jobForm).forEach(key => {
@@ -202,12 +273,12 @@ const ClientDashboard = () => {
             formData.append('attachments', file);
           });
         } else if (key === 'skills') {
-          formData.append('skills', JSON.stringify(jobForm.skills || []));
-        } else if (key === 'budget_min') {
-          formData.append('budget_min', budget_min);
-        } else if (key === 'budget_max') {
-          formData.append('budget_max', budget_max);
-        } else if (jobForm[key] !== undefined && jobForm[key] !== null) {
+          // Ensure skills is always a valid array
+          const skills = Array.isArray(jobForm.skills) ? jobForm.skills : [];
+          formData.append('skills', JSON.stringify(skills));
+        } else if (!['budget_min', 'budget_max'].includes(key) && 
+                   jobForm[key] !== undefined && 
+                   jobForm[key] !== null) {
           formData.append(key, jobForm[key]);
         }
       });
@@ -275,20 +346,72 @@ const ClientDashboard = () => {
             <BusinessIcon sx={{ fontSize: 60 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
-            </Typography>
-            <Typography variant="body2" sx={{ maxWidth: 600 }}>
-              {companyProfile.description}
-            </Typography>
+            {editProfile ? (
+              <Box component="form" sx={{ mt: 2, width: '100%' }}>
+                <TextField
+                  fullWidth
+                  label="Company Name"
+                  value={companyProfile.name}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, name: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Industry"
+                  value={companyProfile.industry}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Company Size"
+                  value={companyProfile.size}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, size: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Location"
+                  value={companyProfile.location}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, location: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Description"
+                  value={companyProfile.description}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, description: e.target.value })}
+                  margin="normal"
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleProfileUpdate}
+                  sx={{ mt: 2 }}
+                >
+                  Save Changes
+                </Button>
+              </Box>
+            ) : (
+              <>
+                <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
+                <Typography variant="body1" color="text.secondary" gutterBottom>
+                  {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
+                </Typography>
+                <Typography variant="body2" sx={{ maxWidth: 600 }}>
+                  {companyProfile.description}
+                </Typography>
+              </>
+            )}
           </Box>
           <Button
             variant="outlined"
             startIcon={<EditIcon />}
+            onClick={() => setEditProfile(!editProfile)}
             sx={{ ml: 'auto' }}
           >
-            Edit Profile
+            {editProfile ? 'Cancel' : 'Edit Profile'}
           </Button>
         </Box>
       </Paper>
@@ -354,20 +477,72 @@ const ClientDashboard = () => {
             <BusinessIcon sx={{ fontSize: 60 }} />
           </Avatar>
           <Box>
-            <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
-            </Typography>
-            <Typography variant="body2" sx={{ maxWidth: 600 }}>
-              {companyProfile.description}
-            </Typography>
+            {editProfile ? (
+              <Box component="form" sx={{ mt: 2, width: '100%' }}>
+                <TextField
+                  fullWidth
+                  label="Company Name"
+                  value={companyProfile.name}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, name: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Industry"
+                  value={companyProfile.industry}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Company Size"
+                  value={companyProfile.size}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, size: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  label="Location"
+                  value={companyProfile.location}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, location: e.target.value })}
+                  margin="normal"
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Description"
+                  value={companyProfile.description}
+                  onChange={(e) => setCompanyProfile({ ...companyProfile, description: e.target.value })}
+                  margin="normal"
+                />
+                <Button
+                  variant="contained"
+                  onClick={handleProfileUpdate}
+                  sx={{ mt: 2 }}
+                >
+                  Save Changes
+                </Button>
+              </Box>
+            ) : (
+              <>
+                <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
+                <Typography variant="body1" color="text.secondary" gutterBottom>
+                  {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
+                </Typography>
+                <Typography variant="body2" sx={{ maxWidth: 600 }}>
+                  {companyProfile.description}
+                </Typography>
+              </>
+            )}
           </Box>
           <Button
             variant="outlined"
             startIcon={<EditIcon />}
+            onClick={() => setEditProfile(!editProfile)}
             sx={{ ml: 'auto' }}
           >
-            Edit Profile
+            {editProfile ? 'Cancel' : 'Edit Profile'}
           </Button>
         </Box>
       </Paper>
@@ -448,6 +623,138 @@ const ClientDashboard = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Active Job Listings Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+
+      {/* Settings and Recent Applications Section */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5">Recruitment Settings</Typography>
+          <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditSettings(!editSettings)}>
+            {editSettings ? 'Cancel' : 'Update Settings'}
+          </Button>
+        </Box>
+
+        {editSettings ? (
+          <Box component="form" sx={{ mt: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={recruitmentSettings.autoScreening}
+                  onChange={(e) => setRecruitmentSettings(prev => ({
+                    ...prev,
+                    autoScreening: e.target.checked
+                  }))}
+                />
+              }
+              label="Enable Auto-Screening"
+            />
+            <Typography variant="subtitle1" sx={{ mt: 2 }}>Notification Preferences</Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={recruitmentSettings.notificationPreferences.email}
+                  onChange={(e) => setRecruitmentSettings(prev => ({
+                    ...prev,
+                    notificationPreferences: {
+                      ...prev.notificationPreferences,
+                      email: e.target.checked
+                    }
+                  }))}
+                />
+              }
+              label="Email Notifications"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={recruitmentSettings.notificationPreferences.inApp}
+                  onChange={(e) => setRecruitmentSettings(prev => ({
+                    ...prev,
+                    notificationPreferences: {
+                      ...prev.notificationPreferences,
+                      inApp: e.target.checked
+                    }
+                  }))}
+                />
+              }
+              label="In-App Notifications"
+            />
+            <TextField
+              fullWidth
+              type="number"
+              label="Default Application Deadline (days)"
+              value={recruitmentSettings.applicationDeadlineDefault}
+              onChange={(e) => setRecruitmentSettings(prev => ({
+                ...prev,
+                applicationDeadlineDefault: parseInt(e.target.value)
+              }))}
+              margin="normal"
+            />
+            <Button
+              variant="contained"
+              onClick={handleSettingsUpdate}
+              sx={{ mt: 2 }}
+            >
+              Save Settings
+            </Button>
+          </Box>
+        ) : (
+          <Box>
+            <Typography variant="body1">
+              Auto-Screening: {recruitmentSettings.autoScreening ? 'Enabled' : 'Disabled'}
+            </Typography>
+            <Typography variant="body1">
+              Email Notifications: {recruitmentSettings.notificationPreferences.email ? 'Enabled' : 'Disabled'}
+            </Typography>
+            <Typography variant="body1">
+              In-App Notifications: {recruitmentSettings.notificationPreferences.inApp ? 'Enabled' : 'Disabled'}
+            </Typography>
+            <Typography variant="body1">
+              Default Application Deadline: {recruitmentSettings.applicationDeadlineDefault} days
+            </Typography>
+          </Box>
+        )}
+
+        <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>Recent Applications</Typography>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Applicant</TableCell>
+                <TableCell>Position</TableCell>
+                <TableCell>Applied Date</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {recentApplications.map((application) => (
+                <TableRow key={application.id}>
+                  <TableCell>{application.applicant_name}</TableCell>
+                  <TableCell>{application.job_title}</TableCell>
+                  <TableCell>{new Date(application.applied_date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={application.status}
+                      color={application.status === 'Pending' ? 'warning' : 
+                             application.status === 'Shortlisted' ? 'info' : 
+                             application.status === 'Rejected' ? 'error' : 'success'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton size="small" onClick={() => handleViewApplication(application.id)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       {/* Active Job Listings Section */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
@@ -610,7 +917,9 @@ const ClientDashboard = () => {
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h5">Recruitment Settings</Typography>
-          <Button variant="outlined" startIcon={<EditIcon />}>Update Settings</Button>
+          <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditSettings(!editSettings)}>
+            {editSettings ? 'Cancel' : 'Update Settings'}
+          </Button>
         </Box>
         
         <Grid container spacing={3}>
