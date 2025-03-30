@@ -8,10 +8,12 @@ from .views import RegisterView, VerifyEmailView
 from .auth import LoginView
 from .job_views import JobPostViewSet
 from .job_seeker_views import JobSeekerProfileViewSet
+from .saved_jobs_views import SavedJobViewSet
 
 router = DefaultRouter()
 router.register(r'jobs', JobPostViewSet, basename='jobs')
 router.register(r'profile/job-seeker', JobSeekerProfileViewSet, basename='job-seeker-profile')
+router.register(r'jobs/saved', SavedJobViewSet, basename='saved-jobs')
 
 class GetCSRFToken(View):
     @method_decorator(ensure_csrf_cookie)

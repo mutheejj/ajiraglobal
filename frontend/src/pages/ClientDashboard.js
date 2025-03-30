@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Button, Grid, Paper, TextField, MenuItem, Chip, Card, CardContent, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, Avatar, LinearProgress, Divider } from '@mui/material';
+import { Box, Container, Typography, Button, Grid, Paper, TextField, MenuItem, Chip, Card, CardContent, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, Avatar, LinearProgress, Divider, Alert, Snackbar, InputAdornment } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as VisibilityIcon, Business as BusinessIcon, People as PeopleIcon, Assessment as AssessmentIcon, Timeline as TimelineIcon } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 
 const categories = [
   'Web Development',
@@ -26,18 +27,12 @@ const initialJobForm = {
   skills: [],
   experience_level: '',
   project_type: '',
-  budget_min: '',
-  budget_max: '',
+  budget: '',
+  currency: 'KSH',
   duration: '',
   location: '',
   remote_work: false,
-  status: 'draft',
-  preferred_timezone: '',
-  attachments: [],
-  visibility: 'public',
-  application_deadline: '',
-  payment_type: 'fixed',
-  interview_required: false
+  status: 'draft'
 };
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -58,6 +53,9 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 
 const ClientDashboard = () => {
   const [jobs, setJobs] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [stats, setStats] = useState({
     totalJobs: 0,
     activeJobs: 0,
@@ -81,6 +79,12 @@ const ClientDashboard = () => {
   const [recruitmentSettings, setRecruitmentSettings] = useState({
     autoScreening: false,
     notificationPreferences: {
+      email: false,
+      inApp: false
+    },
+    applicationDeadlineDefault: 30,
+    autoScreening: false,
+    notificationPreferences: {
       email: true,
       inApp: true
     },
@@ -88,6 +92,9 @@ const ClientDashboard = () => {
     interviewStages: ['Initial', 'Technical', 'Final'],
     customFields: []
   });
+
+  // Ensure notificationPreferences is always defined
+  const safeNotificationPreferences = recruitmentSettings?.notificationPreferences || { email: false, inApp: false };
   const [editSettings, setEditSettings] = useState(false);
   const [recentApplications, setRecentApplications] = useState([]);
 
@@ -99,50 +106,88 @@ const ClientDashboard = () => {
 
   const fetchCompanyProfile = async () => {
     try {
-      const response = await companyService.getCompanyProfile();
-      setCompanyProfile(response);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/company/profile/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setCompanyProfile(response.data);
+      setError('');
     } catch (error) {
+      setError('Failed to fetch company profile');
       console.error('Error fetching company profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchRecruitmentSettings = async () => {
     try {
-      const response = await companyService.getRecruitmentSettings();
-      setRecruitmentSettings(response);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/company/recruitment-settings/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setRecruitmentSettings(response.data);
+      setError('');
     } catch (error) {
+      setError('Failed to fetch recruitment settings');
       console.error('Error fetching recruitment settings:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchRecentApplications = async () => {
     try {
-      const response = await companyService.getRecentApplications();
-      setRecentApplications(response);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/company/recent-applications/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setRecentApplications(response.data);
+      setError('');
     } catch (error) {
+      setError('Failed to fetch recent applications');
       console.error('Error fetching recent applications:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleProfileUpdate = async () => {
     try {
-      await companyService.updateCompanyProfile(companyProfile);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.put('/api/company/profile/', companyProfile, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       setEditProfile(false);
       setSuccessMessage('Company profile updated successfully');
+      setError('');
     } catch (error) {
       setError('Failed to update company profile');
       console.error('Error updating company profile:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSettingsUpdate = async () => {
     try {
-      await companyService.updateRecruitmentSettings(recruitmentSettings);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.put('/api/company/recruitment-settings/', recruitmentSettings, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       setEditSettings(false);
       setSuccessMessage('Recruitment settings updated successfully');
+      setError('');
     } catch (error) {
       setError('Failed to update recruitment settings');
       console.error('Error updating recruitment settings:', error);
+    } finally {
+      setLoading(false);
     }
   };
   const [recruitmentMetrics, setRecruitmentMetrics] = useState([
@@ -156,29 +201,33 @@ const ClientDashboard = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [jobForm, setJobForm] = useState(initialJobForm);
   const [skillInput, setSkillInput] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-
   useEffect(() => {
     fetchJobs();
   }, []);
 
   const fetchJobs = async () => {
     try {
-      const response = await axios.get('/api/jobs/');
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/jobs/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       setJobs(response.data);
       
       // Calculate stats
       const jobStats = response.data.reduce((acc, job) => {
         acc.totalJobs++;
-        acc[`${job.status}Jobs`]++;
+        acc[`${job.status}Jobs`] = (acc[`${job.status}Jobs`] || 0) + 1;
         return acc;
       }, { totalJobs: 0, activeJobs: 0, draftJobs: 0, closedJobs: 0 });
       
       setStats(jobStats);
+      setError('');
     } catch (error) {
+      setError('Failed to fetch jobs');
       console.error('Error fetching jobs:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -237,15 +286,9 @@ const ClientDashboard = () => {
       setError('Job description is required');
       return;
     }
-    if (jobForm.payment_type === 'fixed') {
-      if (!jobForm.budget_min || !jobForm.budget_max) {
-        setError('Please specify budget range');
-        return;
-      }
-      if (Number(jobForm.budget_min) > Number(jobForm.budget_max)) {
-        setError('Minimum budget cannot be greater than maximum budget');
-        return;
-      }
+    if (!jobForm.budget || Number(jobForm.budget) <= 0) {
+      setError('Please specify a valid budget');
+      return;
     }
     if (!jobForm.duration) {
       setError('Please specify project duration');
@@ -253,42 +296,16 @@ const ClientDashboard = () => {
     }
     
     try {
-      const formData = new FormData();
-      
-      // Format budget values for fixed payment type
-      if (jobForm.payment_type === 'fixed') {
-        // Convert to number and ensure positive values
-        const minBudget = Math.max(0, Number(jobForm.budget_min));
-        const maxBudget = Math.max(0, Number(jobForm.budget_max));
-        
-        // Format as decimal with exactly 2 decimal places
-        formData.append('budget_min', minBudget.toFixed(2));
-        formData.append('budget_max', maxBudget.toFixed(2));
-      }
-      
-      // Append all job data
-      Object.keys(jobForm).forEach(key => {
-        if (key === 'attachments' && jobForm[key]) {
-          jobForm.attachments.forEach(file => {
-            formData.append('attachments', file);
-          });
-        } else if (key === 'skills') {
-          // Ensure skills is always a valid array
-          const skills = Array.isArray(jobForm.skills) ? jobForm.skills : [];
-          formData.append('skills', JSON.stringify(skills));
-        } else if (!['budget_min', 'budget_max'].includes(key) && 
-                   jobForm[key] !== undefined && 
-                   jobForm[key] !== null) {
-          formData.append(key, jobForm[key]);
-        }
-      });
-      
-      formData.append('status', 'active');
+      const jobData = {
+        ...jobForm,
+        budget: Number(jobForm.budget).toFixed(2),
+        skills: Array.isArray(jobForm.skills) ? jobForm.skills : [],
+        status: 'active'
+      };
       
       const token = localStorage.getItem('token');
-      await axios.post('/api/jobs/', formData, {
+      await axios.post('/api/jobs/', jobData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
         }
       });
@@ -336,85 +353,28 @@ const ClientDashboard = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Company Profile Section */}
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Avatar
-            sx={{ width: 100, height: 100, mr: 3 }}
-            src={companyProfile.logo}
-          >
-            <BusinessIcon sx={{ fontSize: 60 }} />
-          </Avatar>
-          <Box>
-            {editProfile ? (
-              <Box component="form" sx={{ mt: 2, width: '100%' }}>
-                <TextField
-                  fullWidth
-                  label="Company Name"
-                  value={companyProfile.name}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, name: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Industry"
-                  value={companyProfile.industry}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Company Size"
-                  value={companyProfile.size}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, size: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Location"
-                  value={companyProfile.location}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, location: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Description"
-                  value={companyProfile.description}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, description: e.target.value })}
-                  margin="normal"
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleProfileUpdate}
-                  sx={{ mt: 2 }}
-                >
-                  Save Changes
-                </Button>
-              </Box>
-            ) : (
-              <>
-                <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
-                <Typography variant="body1" color="text.secondary" gutterBottom>
-                  {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
-                </Typography>
-                <Typography variant="body2" sx={{ maxWidth: 600 }}>
-                  {companyProfile.description}
-                </Typography>
-              </>
-            )}
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<EditIcon />}
-            onClick={() => setEditProfile(!editProfile)}
-            sx={{ ml: 'auto' }}
-          >
-            {editProfile ? 'Cancel' : 'Edit Profile'}
-          </Button>
-        </Box>
-      </Paper>
+      {/* Notification System */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSuccessMessage('')} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
 
       {/* Recruitment Metrics Section */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
@@ -467,85 +427,7 @@ const ClientDashboard = () => {
           </ResponsiveContainer>
         </Box>
       </Paper>
-      {/* Company Profile Section */}
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Avatar
-            sx={{ width: 100, height: 100, mr: 3 }}
-            src={companyProfile.logo}
-          >
-            <BusinessIcon sx={{ fontSize: 60 }} />
-          </Avatar>
-          <Box>
-            {editProfile ? (
-              <Box component="form" sx={{ mt: 2, width: '100%' }}>
-                <TextField
-                  fullWidth
-                  label="Company Name"
-                  value={companyProfile.name}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, name: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Industry"
-                  value={companyProfile.industry}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, industry: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Company Size"
-                  value={companyProfile.size}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, size: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Location"
-                  value={companyProfile.location}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, location: e.target.value })}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Description"
-                  value={companyProfile.description}
-                  onChange={(e) => setCompanyProfile({ ...companyProfile, description: e.target.value })}
-                  margin="normal"
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleProfileUpdate}
-                  sx={{ mt: 2 }}
-                >
-                  Save Changes
-                </Button>
-              </Box>
-            ) : (
-              <>
-                <Typography variant="h4" gutterBottom>{companyProfile.name}</Typography>
-                <Typography variant="body1" color="text.secondary" gutterBottom>
-                  {companyProfile.industry} · {companyProfile.size} employees · {companyProfile.location}
-                </Typography>
-                <Typography variant="body2" sx={{ maxWidth: 600 }}>
-                  {companyProfile.description}
-                </Typography>
-              </>
-            )}
-          </Box>
-          <Button
-            variant="outlined"
-            startIcon={<EditIcon />}
-            onClick={() => setEditProfile(!editProfile)}
-            sx={{ ml: 'auto' }}
-          >
-            {editProfile ? 'Cancel' : 'Edit Profile'}
-          </Button>
-        </Box>
-      </Paper>
+
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" component="h1">
           Client Dashboard
@@ -626,6 +508,48 @@ const ClientDashboard = () => {
 
       {/* Active Job Listings Section */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5">Active Job Listings</Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleDialogOpen}>
+            Post New Job
+          </Button>
+        </Box>
+
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Job Title</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Applications</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {jobs.map((job) => (
+                <TableRow key={job.id}>
+                  <TableCell>{job.title}</TableCell>
+                  <TableCell>{job.category}</TableCell>
+                  <TableCell>{job.applications_count || 0}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={job.status}
+                      color={job.status === 'active' ? 'success' : 'default'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton size="small" onClick={() => handleStatusChange(job.id, job.status === 'active' ? 'closed' : 'active')}>
+                      {job.status === 'active' ? <DeleteIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       {/* Settings and Recent Applications Section */}
       <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
@@ -654,7 +578,7 @@ const ClientDashboard = () => {
             <FormControlLabel
               control={
                 <Switch
-                  checked={recruitmentSettings.notificationPreferences.email}
+                  checked={safeNotificationPreferences.email}
                   onChange={(e) => setRecruitmentSettings(prev => ({
                     ...prev,
                     notificationPreferences: {
@@ -669,7 +593,7 @@ const ClientDashboard = () => {
             <FormControlLabel
               control={
                 <Switch
-                  checked={recruitmentSettings.notificationPreferences.inApp}
+                  checked={safeNotificationPreferences.inApp}
                   onChange={(e) => setRecruitmentSettings(prev => ({
                     ...prev,
                     notificationPreferences: {
@@ -688,17 +612,10 @@ const ClientDashboard = () => {
               value={recruitmentSettings.applicationDeadlineDefault}
               onChange={(e) => setRecruitmentSettings(prev => ({
                 ...prev,
-                applicationDeadlineDefault: parseInt(e.target.value)
+                applicationDeadlineDefault: parseInt(e.target.value) || 0
               }))}
-              margin="normal"
-            />
-            <Button
-              variant="contained"
-              onClick={handleSettingsUpdate}
               sx={{ mt: 2 }}
-            >
-              Save Settings
-            </Button>
+            />
           </Box>
         ) : (
           <Box>
@@ -706,665 +623,17 @@ const ClientDashboard = () => {
               Auto-Screening: {recruitmentSettings.autoScreening ? 'Enabled' : 'Disabled'}
             </Typography>
             <Typography variant="body1">
-              Email Notifications: {recruitmentSettings.notificationPreferences.email ? 'Enabled' : 'Disabled'}
+              Email Notifications: {recruitmentSettings?.notificationPreferences?.email ? 'Enabled' : 'Disabled'}
             </Typography>
             <Typography variant="body1">
-              In-App Notifications: {recruitmentSettings.notificationPreferences.inApp ? 'Enabled' : 'Disabled'}
+              In-App Notifications: {recruitmentSettings?.notificationPreferences?.inApp ? 'Enabled' : 'Disabled'}
             </Typography>
             <Typography variant="body1">
               Default Application Deadline: {recruitmentSettings.applicationDeadlineDefault} days
             </Typography>
           </Box>
         )}
-
-        <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>Recent Applications</Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Applicant</TableCell>
-                <TableCell>Position</TableCell>
-                <TableCell>Applied Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {recentApplications.map((application) => (
-                <TableRow key={application.id}>
-                  <TableCell>{application.applicant_name}</TableCell>
-                  <TableCell>{application.job_title}</TableCell>
-                  <TableCell>{new Date(application.applied_date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={application.status}
-                      color={application.status === 'Pending' ? 'warning' : 
-                             application.status === 'Shortlisted' ? 'info' : 
-                             application.status === 'Rejected' ? 'error' : 'success'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" onClick={() => handleViewApplication(application.id)}>
-                      <VisibilityIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
       </Paper>
-
-      {/* Active Job Listings Section */}
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          Active Job Listings
-        </Typography>
-        <Grid container spacing={3}>
-          {jobs.map((job) => (
-            <Grid item xs={12} md={6} lg={4} key={job.id}>
-              <Card sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)'
-                }
-              }}>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="h6" gutterBottom>
-                      {job.title}
-                    </Typography>
-                    <Chip
-                      label={job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                      color={job.status === 'active' ? 'success' : job.status === 'draft' ? 'default' : 'error'}
-                      size="small"
-                    />
-                  </Box>
-                  
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {job.category}
-                  </Typography>
-                  
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Budget:</strong> ${job.budget_min} - ${job.budget_max}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Duration:</strong> {job.duration} days
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Posted:</strong> {new Date(job.created_at).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {job.skills.slice(0, 3).map((skill, index) => (
-                      <Chip
-                        key={index}
-                        label={skill}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                    {job.skills.length > 3 && (
-                      <Chip
-                        label={`+${job.skills.length - 3}`}
-                        size="small"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-                </CardContent>
-
-                <Divider />
-                <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box>
-                    <IconButton size="small" onClick={() => handleStatusChange(job.id, job.status === 'active' ? 'closed' : 'active')}>
-                      <VisibilityIcon />
-                    </IconButton>
-                    <IconButton size="small">
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton size="small">
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                  <Button size="small" color="primary">
-                    View Applications
-                  </Button>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Paper>
-
-      {/* Recent Applications Section */}
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-          Recent Applications
-        </Typography>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Applicant</TableCell>
-                <TableCell>Job Position</TableCell>
-                <TableCell>Applied Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Match Score</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {/* Sample data - replace with actual applications data */}
-              {[
-                {
-                  id: 1,
-                  applicant: 'John Doe',
-                  position: 'Senior Developer',
-                  date: '2024-01-15',
-                  status: 'Under Review',
-                  score: 85
-                },
-                {
-                  id: 2,
-                  applicant: 'Jane Smith',
-                  position: 'UX Designer',
-                  date: '2024-01-14',
-                  status: 'Shortlisted',
-                  score: 92
-                }
-              ].map((application) => (
-                <TableRow key={application.id}>
-                  <TableCell>{application.applicant}</TableCell>
-                  <TableCell>{application.position}</TableCell>
-                  <TableCell>{new Date(application.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={application.status}
-                      color={application.status === 'Shortlisted' ? 'success' : 'default'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={application.score}
-                        sx={{ flexGrow: 1, mr: 1 }}
-                      />
-                      <Typography variant="body2">{application.score}%</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small">
-                      <VisibilityIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-
-      {/* Settings and Job Application Management */}
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5">Recruitment Settings</Typography>
-          <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setEditSettings(!editSettings)}>
-            {editSettings ? 'Cancel' : 'Update Settings'}
-          </Button>
-        </Box>
-        
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Application Process</Typography>
-                <Box sx={{ mb: 2 }}>
-                  <FormControlLabel
-                    control={<Switch checked={true} />}
-                    label="Automatic Application Screening"
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Automatically screen candidates based on job requirements
-                  </Typography>
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <FormControlLabel
-                    control={<Switch checked={true} />}
-                    label="Interview Scheduling"
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Enable automatic interview scheduling with qualified candidates
-                  </Typography>
-                </Box>
-                <Box>
-                  <FormControlLabel
-                    control={<Switch checked={false} />}
-                    label="Assessment Tests"
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Include skill assessment tests in the application process
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Notification Preferences</Typography>
-                <Box sx={{ mb: 2 }}>
-                  <FormControlLabel
-                    control={<Switch checked={true} />}
-                    label="New Application Alerts"
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Receive notifications for new job applications
-                  </Typography>
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <FormControlLabel
-                    control={<Switch checked={true} />}
-                    label="Interview Reminders"
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Get reminders for upcoming interviews
-                  </Typography>
-                </Box>
-                <Box>
-                  <FormControlLabel
-                    control={<Switch checked={true} />}
-                    label="Application Status Updates"
-                  />
-                  <Typography variant="body2" color="text.secondary">
-                    Receive updates when application status changes
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="md" fullWidth>
-      <DialogTitle>Post a New Job</DialogTitle>
-      <DialogContent>
-          {error && (
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-              <Typography color="error">{error}</Typography>
-            </Box>
-          )}
-          {successMessage && (
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
-              <Typography color="success.main">{successMessage}</Typography>
-            </Box>
-          )}
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
-            <StyledPaper component="form" onSubmit={handleSubmit}>
-              <Typography variant="h6" gutterBottom>
-                Job Details
-              </Typography>
-
-        <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Job Title"
-                  name="title"
-                  value={jobForm.title}
-                  onChange={handleFormChange}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  select
-                  label="Category"
-                  name="category"
-                  value={jobForm.category}
-                  onChange={handleFormChange}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Job Description"
-                  name="description"
-                  value={jobForm.description}
-                  onChange={handleFormChange}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Payment Details
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      select
-                      label="Payment Type"
-                      name="payment_type"
-                      value={jobForm.payment_type}
-                      onChange={handleFormChange}
-                    >
-                      <MenuItem value="fixed">Fixed Price</MenuItem>
-                      <MenuItem value="hourly">Hourly Rate</MenuItem>
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Minimum Budget ($)"
-                      name="budget_min"
-                      type="number"
-                      value={jobForm.budget_min}
-                      onChange={handleFormChange}
-                      InputProps={{
-                        inputProps: { min: 0 }
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Maximum Budget ($)"
-                      name="budget_max"
-                      type="number"
-                      value={jobForm.budget_max}
-                      onChange={handleFormChange}
-                      InputProps={{
-                        inputProps: { min: 0 }
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Project Timeline
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Duration (in days)"
-                      name="duration"
-                      type="number"
-                      value={jobForm.duration}
-                      onChange={handleFormChange}
-                      InputProps={{
-                        inputProps: { min: 1 }
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      required
-                      fullWidth
-                      type="date"
-                      label="Application Deadline"
-                      name="application_deadline"
-                      value={jobForm.application_deadline}
-                      onChange={handleFormChange}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Required Skills
-                </Typography>
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Add Skills"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleSkillAdd())}
-                    helperText="Press Enter to add a skill"
-                    InputProps={{
-                      endAdornment: (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={handleSkillAdd}
-                          disabled={!skillInput.trim()}
-                        >
-                          Add
-                        </Button>
-                      ),
-                    }}
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {jobForm.skills.map((skill) => (
-                    <Chip
-                      key={skill}
-                      label={skill}
-                      onDelete={() => handleSkillDelete(skill)}
-                      color="primary"
-                      variant="outlined"
-                    />
-                  ))}
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  select
-                  label="Experience Level"
-                  name="experience_level"
-                  value={jobForm.experience_level}
-                  onChange={handleFormChange}
-                >
-                  <MenuItem value="entry">Entry Level</MenuItem>
-                  <MenuItem value="intermediate">Intermediate</MenuItem>
-                  <MenuItem value="expert">Expert</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Project Requirements
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Project Requirements"
-                  name="requirements"
-                  value={jobForm.requirements}
-                  onChange={handleFormChange}
-                  helperText="Specify the detailed requirements and qualifications needed for this project"
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  select
-                  label="Project Type"
-                  name="project_type"
-                  value={jobForm.project_type}
-                  onChange={handleFormChange}
-                >
-                  <MenuItem value="one-time">One-time Project</MenuItem>
-                  <MenuItem value="ongoing">Ongoing Project</MenuItem>
-                  <MenuItem value="complex">Complex Project</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={jobForm.interview_required}
-                      onChange={(e) => setJobForm(prev => ({
-                        ...prev,
-                        interview_required: e.target.checked
-                      }))}
-                      name="interview_required"
-                    />
-                  }
-                  label="Require Interview"
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Preferred Timezone"
-                  name="preferred_timezone"
-                  value={jobForm.preferred_timezone}
-                  onChange={handleFormChange}
-                >
-                  <MenuItem value="EAT">East Africa Time (EAT)</MenuItem>
-                  <MenuItem value="UTC">UTC</MenuItem>
-                  <MenuItem value="flexible">Flexible</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Job Visibility"
-                  name="visibility"
-                  value={jobForm.visibility}
-                  onChange={handleFormChange}
-                  helperText="Control who can see and apply to your job"
-                >
-                  <MenuItem value="public">Public - Visible to all</MenuItem>
-                  <MenuItem value="private">Private - Invite only</MenuItem>
-                  <MenuItem value="featured">Featured - Promoted listing</MenuItem>
-                </TextField>
-              </Grid>
-
-              <Grid item xs={12}>
-                <input
-                  type="file"
-                  multiple
-                  onChange={(e) => setJobForm(prev => ({
-                    ...prev,
-                    attachments: Array.from(e.target.files)
-                  }))}
-                  style={{ display: 'none' }}
-                  id="job-attachments"
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-                />
-                <label htmlFor="job-attachments">
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    fullWidth
-                    startIcon={<AddIcon />}
-                  >
-                    Add Attachments
-                  </Button>
-                </label>
-                {jobForm.attachments.length > 0 && (
-                  <Box sx={{ mt: 1 }}>
-                    {jobForm.attachments.map((file, index) => (
-                      <Chip
-                        key={index}
-                        label={file.name}
-                        onDelete={() => setJobForm(prev => ({
-                          ...prev,
-                          attachments: prev.attachments.filter((_, i) => i !== index)
-                        }))}
-                        sx={{ mr: 1, mb: 1 }}
-                      />
-                    ))}
-                  </Box>
-                )}
-              </Grid>
-
-              <Grid item xs={12}>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  fullWidth
-                  sx={{ mt: 2 }}
-                >
-                  Post Job
-                </Button>
-              </Grid>
-            </Grid>
-          </StyledPaper>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <StyledPaper>
-            <Typography variant="h6" gutterBottom>
-              Tips for a Great Job Post
-            </Typography>
-            <Box component="ul" sx={{ pl: 2 }}>
-              <Typography component="li" sx={{ mb: 1 }}>
-                Be specific about project requirements
-              </Typography>
-              <Typography component="li" sx={{ mb: 1 }}>
-                Set clear expectations for deliverables
-              </Typography>
-              <Typography component="li" sx={{ mb: 1 }}>
-                Define your budget range realistically
-              </Typography>
-              <Typography component="li" sx={{ mb: 1 }}>
-                List all required skills and experience
-              </Typography>
-              <Typography component="li" sx={{ mb: 1 }}>
-                Provide context about your project
-              </Typography>
-            </Box>
-          </StyledPaper>
-        </Grid>
-      </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleDialogClose}>Cancel</Button>
-        <Button onClick={handleSaveAsDraft}>Save as Draft</Button>
-        <Button variant="contained" onClick={handleSubmit}>Post Job</Button>
-      </DialogActions>
-    </Dialog>
     </Container>
   );
 };

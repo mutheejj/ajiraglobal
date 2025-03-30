@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Grid, Typography, Paper, TextField, MenuItem, Chip, InputAdornment, CircularProgress, Alert } from '@mui/material';
+import { Box, Container, Grid, Typography, Paper, MenuItem, Chip, CircularProgress, Alert, TextField, InputAdornment } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import WorkIcon from '@mui/icons-material/Work';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import JobAPI from '../services/JobAPI';
+import JobDetails from '../components/JobDetails';
+import SearchBar from '../components/common/SearchBar';
 
 const categories = [
   'All Categories',
@@ -48,6 +49,7 @@ const Home = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -91,8 +93,8 @@ const Home = () => {
     setSelectedCategory(event.target.value);
   };
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
+  const handleSearch = (value) => {
+    setSearchQuery(value);
   };
 
   const filteredJobs = jobs.filter(job => {
@@ -107,6 +109,17 @@ const Home = () => {
     return matchesCategory && matchesSearch;
   });
 
+  if (selectedJob) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <JobDetails 
+          job={selectedJob} 
+          onClose={() => setSelectedJob(null)} 
+        />
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 4 }}>
@@ -120,19 +133,9 @@ const Home = () => {
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={8}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search for jobs..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
+          <SearchBar
+            onSearch={handleSearch}
+            placeholder="Search for jobs, skills, or companies..."
           />
         </Grid>
         <Grid item xs={12} md={4}>
@@ -163,7 +166,7 @@ const Home = () => {
         <Grid container spacing={3}>
           {filteredJobs.map((job) => (
             <Grid item xs={12} key={job.id}>
-              <StyledJobCard>
+              <StyledJobCard onClick={() => setSelectedJob(job)}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={8}>
                     <Typography variant="h6" gutterBottom>

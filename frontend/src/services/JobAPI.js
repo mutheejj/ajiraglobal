@@ -3,6 +3,41 @@ import axios from './axiosConfig';
 const API_BASE_URL = '/api';
 
 class JobAPI {
+    static async getProjects() {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/projects/`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    }
+
+    static async createProject(projectData) {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/projects/`, projectData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    }
+
+    static async updateProject(projectId, projectData) {
+        try {
+            const response = await axios.put(`${API_BASE_URL}/projects/${projectId}/`, projectData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    }
+
+    static async deleteProject(projectId) {
+        try {
+            await axios.delete(`${API_BASE_URL}/projects/${projectId}/`);
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    }
+
     static async getJobSeekerProfile() {
         try {
             const response = await axios.get(`${API_BASE_URL}/profile/job-seeker/`);
