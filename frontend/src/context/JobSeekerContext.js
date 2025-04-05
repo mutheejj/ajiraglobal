@@ -27,13 +27,19 @@ export const JobSeekerProvider = ({ children }) => {
     const updateProfile = async (profileData) => {
         try {
             setLoading(true);
-            const data = await JobAPI.updateJobSeekerProfile(profileData);
+            // Merge new profile data with existing profile data
+            const mergedProfileData = { ...profile, ...profileData };
+            const data = await JobAPI.updateJobSeekerProfile(mergedProfileData);
             setProfile(data);
             setError(null);
             return true;
         } catch (err) {
-            setError('Failed to update profile');
-            console.error('Error updating profile:', err);
+            const errorMessage = err.response?.data || err.message;
+            setError(typeof errorMessage === 'object' ? 
+                Object.entries(errorMessage).map(([key, value]) => `${key}: ${value}`).join('\n') : 
+                errorMessage
+            );
+            console.error('Error updating profile:', errorMessage);
             return false;
         } finally {
             setLoading(false);
@@ -78,6 +84,11 @@ export const JobSeekerProvider = ({ children }) => {
         fetchProfile();
         fetchApplications();
     }, []);
+    
+    // Add a function to refresh the profile data
+    const refreshProfile = async () => {
+        await fetchProfile();
+    };
 
     const value = {
         profile,
@@ -88,7 +99,7 @@ export const JobSeekerProvider = ({ children }) => {
         updateProfile,
         uploadResume,
         applyForJob,
-        refreshProfile: fetchProfile,
+        refreshProfile,
         refreshApplications: fetchApplications
     };
 

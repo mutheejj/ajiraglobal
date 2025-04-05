@@ -40,7 +40,7 @@ class JobAPI {
 
     static async getJobSeekerProfile() {
         try {
-            const response = await axios.get(`${API_BASE_URL}/profile/job-seeker/`);
+            const response = await axios.get(`${API_BASE_URL}/profile/job-seeker/profile/`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -49,7 +49,8 @@ class JobAPI {
 
     static async updateJobSeekerProfile(profileData) {
         try {
-            const response = await axios.put(`${API_BASE_URL}/profile/job-seeker/`, profileData);
+            // Changed from PUT to PATCH to match backend expectations
+            const response = await axios.patch(`${API_BASE_URL}/profile/job-seeker/profile/`, profileData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

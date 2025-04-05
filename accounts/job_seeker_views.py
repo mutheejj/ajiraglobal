@@ -27,7 +27,7 @@ class JobSeekerProfileViewSet(viewsets.ModelViewSet):
     def get_object(self):
         return self.request.user
     
-    @action(detail=False, methods=['get', 'put'])
+    @action(detail=False, methods=['get', 'put', 'patch'])
     def profile(self, request):
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)

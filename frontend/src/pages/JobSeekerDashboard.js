@@ -1,444 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Container, Grid, Typography, Paper, TextField, Button, Chip, Avatar, Tabs, Tab, CircularProgress } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Container, Grid, Typography, Paper, Tabs, Tab } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import PersonIcon from '@mui/icons-material/Person';
+import WorkIcon from '@mui/icons-material/Work';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
+import JobSeekerProfile from '../components/job-seeker/JobSeekerProfile';
 import JobApplications from '../components/job-seeker/JobApplications';
 import SavedJobs from '../components/job-seeker/SavedJobs';
 import NotificationPreferences from '../components/job-seeker/NotificationPreferences';
 import OngoingProjects from '../components/job-seeker/OngoingProjects';
-import { useJobSeeker } from '../context/JobSeekerContext';
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  height: '100%',
-  backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[1],
-  '&:hover': {
-    boxShadow: theme.shadows[2],
-    transition: theme.transitions.create(['box-shadow'], {
-      duration: theme.transitions.duration.short,
-    }),
-  },
+const StyledContainer = styled(Container)(({ theme }) => ({
+  paddingTop: theme.spacing(4),
+  paddingBottom: theme.spacing(4),
 }));
 
-const ProfileSection = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  marginBottom: theme.spacing(4),
+const StyledTabs = styled(Tabs)(({ theme }) => ({
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  marginBottom: theme.spacing(3),
 }));
 
-const SkillChip = styled(Chip)(({ theme }) => ({
-  margin: theme.spacing(0.5),
-  backgroundColor: theme.palette.primary.light,
-  color: theme.palette.primary.contrastText,
-}));
+const TabPanel = ({ children, value, index }) => (
+  <div role="tabpanel" hidden={value !== index}>
+    {value === index && children}
+  </div>
+);
 
 const JobSeekerDashboard = () => {
   const [currentTab, setCurrentTab] = useState(0);
-  const { profile: contextProfile, loading, error, updateProfile } = useJobSeeker();
-  const [previewImage, setPreviewImage] = useState(null);
-  const [profile, setProfile] = useState({
-    skills: [],
-    first_name: '',
-    last_name: '',
-    email: '',
-    profession: '',
-    hourlyRate: '',
-    currency: 'KSH',
-    availability: 'Full-time',
-    bio: '',
-    githubLink: '',
-    linkedinLink: '',
-    personalWebsite: '',
-    portfolioDescription: '',
-    ...contextProfile
-  });
-
-  useEffect(() => {
-    if (contextProfile) {
-      setProfile(prev => ({
-        ...prev,
-        ...contextProfile,
-        skills: contextProfile.skills || prev.skills || []
-      }));
-    }
-  }, [contextProfile]);
-  const [selectedImage, setSelectedImage] = useState(null);
-
-  const [newSkill, setNewSkill] = useState('');
-
-  const handleSkillAdd = () => {
-    if (newSkill.trim() && !profile.skills.includes(newSkill.trim())) {
-      setProfile(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill.trim()]
-      }));
-      setNewSkill('');
-    }
-  };
-
-  const handleSkillDelete = (skillToDelete) => {
-    setProfile(prev => ({
-      ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToDelete)
-    }));
-  };
-
-  const handleProfileUpdate = async () => {
-    const formData = new FormData();
-    if (selectedImage) {
-      formData.append('profile_picture', selectedImage);
-    }
-    const success = await updateProfile(formData);
-    if (success) {
-      setSelectedImage(null);
-      if (previewImage) {
-        URL.revokeObjectURL(previewImage);
-        setPreviewImage(null);
-      }
-    }
-  };
-
-  const handleImageChange = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedImage(event.target.files[0]);
-      setPreviewImage(URL.createObjectURL(event.target.files[0]));
-    }
-  };
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
   };
 
-  const renderProfile = () => {
-    if (loading) {
-      return (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress />
-        </Box>
-      );
-    }
-
-    if (error) {
-      return (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <Typography color="error">{error}</Typography>
-        </Box>
-      );
-    }
-
-    if (!profile) {
-      return null;
-    }
-
-    switch (currentTab) {
-      case 0:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <StyledPaper>
-                <ProfileSection>
-                  <Avatar
-                    src={previewImage || profile.profile_picture}
-                    sx={{
-                      width: 120,
-                      height: 120,
-                      mb: 2,
-                      bgcolor: 'primary.main',
-                      fontSize: '3rem',
-                    }}
-                  >
-                    {profile.first_name ? profile.first_name.charAt(0) : ''}
-                  </Avatar>
-                  <Typography variant="subtitle1" color="text.primary" gutterBottom>
-                    {profile.email}
-                  </Typography>
-                  <Typography variant="h5" gutterBottom>
-                    {`${profile.first_name} ${profile.last_name}`}
-                  </Typography>
-                  <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                    {profile.profession}
-                  </Typography>
-                  <input
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    id="profile-photo-input"
-                    type="file"
-                    onChange={handleImageChange}
-                  />
-                  <label htmlFor="profile-photo-input">
-                    <Button variant="outlined" color="primary" component="span">
-                      {selectedImage ? 'Change Selected Photo' : 'Edit Profile Picture'}
-                    </Button>
-                  </label>
-                  {selectedImage && (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleProfileUpdate}
-                      sx={{ mt: 1 }}
-                    >
-                      Upload New Photo
-                    </Button>
-                  )}
-                </ProfileSection>
-
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Hourly Rate
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={8}>
-                      <TextField
-                        fullWidth
-                        label="Rate"
-                        value={profile.hourlyRate}
-                        onChange={(e) => setProfile({ ...profile, hourlyRate: e.target.value })}
-                        type="number"
-                        InputProps={{
-                          startAdornment: profile.currency === 'KSH' ? 'KSh' : '$',
-                        }}
-                      />
-                    </Grid>
-                    <Grid item xs={4}>
-                      <TextField
-                        fullWidth
-                        select
-                        value={profile.currency}
-                        onChange={(e) => setProfile({ ...profile, currency: e.target.value })}
-                      >
-                        <option value="KSH">KSH</option>
-                        <option value="USD">USD</option>
-                      </TextField>
-                    </Grid>
-                  </Grid>
-                </Box>
-
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Availability
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    select
-                    value={profile.availability}
-                    onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
-                  >
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Contract">Contract</option>
-                  </TextField>
-                </Box>
-
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Resume Upload
-                  </Typography>
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => setProfile({ ...profile, resume: e.target.files[0] })}
-                    style={{ display: 'none' }}
-                    id="resume-upload"
-                  />
-                  <label htmlFor="resume-upload">
-                    <Button
-                      variant="outlined"
-                      component="span"
-                      fullWidth
-                      sx={{ mb: 1 }}
-                    >
-                      Upload Resume
-                    </Button>
-                  </label>
-                  {profile.resume && (
-                    <Typography variant="body2" color="text.secondary">
-                      {profile.resume.name}
-                    </Typography>
-                  )}
-                </Box>
-              </StyledPaper>
-            </Grid>
-
-            <Grid item xs={12} md={8}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <StyledPaper>
-                    <Typography variant="h6" gutterBottom>
-                      Professional Bio
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={4}
-                      value={profile.bio}
-                      onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                    />
-                  </StyledPaper>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <StyledPaper>
-                    <Typography variant="h6" gutterBottom>
-                      Skills
-                    </Typography>
-                    <Box sx={{ mb: 2 }}>
-                      <TextField
-                        fullWidth
-                        label="Add Skill"
-                        value={newSkill}
-                        onChange={(e) => setNewSkill(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleSkillAdd())}
-                      />
-                    </Box>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {profile.skills.map((skill) => (
-                        <SkillChip
-                          key={skill}
-                          label={skill}
-                          onDelete={() => handleSkillDelete(skill)}
-                        />
-                      ))}
-                    </Box>
-                  </StyledPaper>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <StyledPaper>
-                    <Typography variant="h6" gutterBottom>
-                      Portfolio & Work History
-                    </Typography>
-                    <input
-                      type="file"
-                      accept=".pdf,.zip,.rar"
-                      onChange={(e) => setProfile({ ...profile, portfolio: e.target.files[0] })}
-                      style={{ display: 'none' }}
-                      id="portfolio-upload"
-                    />
-                    <label htmlFor="portfolio-upload">
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        component="span"
-                        fullWidth
-                        sx={{ mb: 2 }}
-                      >
-                        Upload Portfolio
-                      </Button>
-                    </label>
-                    {profile.portfolio && (
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {profile.portfolio.name}
-                      </Typography>
-                    )}
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={3}
-                      label="Portfolio Description"
-                      value={profile.portfolioDescription}
-                      onChange={(e) => setProfile({ ...profile, portfolioDescription: e.target.value })}
-                      sx={{ mb: 2 }}
-                    />
-                  </StyledPaper>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <StyledPaper>
-                    <Typography variant="h6" gutterBottom>
-                      Social & Professional Links
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      label="GitHub Profile"
-                      value={profile.githubLink}
-                      onChange={(e) => setProfile({ ...profile, githubLink: e.target.value })}
-                      sx={{ mb: 2 }}
-                    />
-                    <TextField
-                      fullWidth
-                      label="LinkedIn Profile"
-                      value={profile.linkedinLink}
-                      onChange={(e) => setProfile({ ...profile, linkedinLink: e.target.value })}
-                      sx={{ mb: 2 }}
-                    />
-                    <TextField
-                      fullWidth
-                      label="Personal Website"
-                      value={profile.personalWebsite}
-                      onChange={(e) => setProfile({ ...profile, personalWebsite: e.target.value })}
-                    />
-                  </StyledPaper>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    fullWidth
-                    onClick={handleProfileUpdate}
-                  >
-                    Save Changes
-                  </Button>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        );
-      case 1:
-        return <JobApplications />;
-      case 2:
-        return <SavedJobs />;
-      case 3:
-        return <OngoingProjects />;
-      case 4:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <StyledPaper>
-                <Typography variant="h6" gutterBottom>
-                  Recommended Jobs
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Based on your skills and experience
-                </Typography>
-                {/* Recommended jobs will be implemented here */}
-              </StyledPaper>
-              <Box sx={{ mt: 3 }}>
-                <StyledPaper>
-                  <Typography variant="h6" gutterBottom>
-                    Learning Resources
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Enhance your skills with these resources
-                  </Typography>
-                  {/* Learning resources will be implemented here */}
-                </StyledPaper>
-              </Box>
-            </Grid>
-          </Grid>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={currentTab} onChange={handleTabChange} aria-label="dashboard tabs">
-          <Tab label="Profile" />
-          <Tab label="Applications" />
-          <Tab label="Saved Jobs" />
-          <Tab label="Projects" />
-          <Tab label="Recommendations" />
-        </Tabs>
+    <StyledContainer maxWidth="lg">
+      <Box sx={{ width: '100%' }}>
+        <StyledTabs
+          value={currentTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab icon={<PersonIcon />} label="Profile" />
+          <Tab icon={<WorkIcon />} label="Applications" />
+          <Tab icon={<BookmarkIcon />} label="Saved Jobs" />
+          <Tab icon={<NotificationsIcon />} label="Notifications" />
+          <Tab icon={<AssignmentIcon />} label="Projects" />
+        </StyledTabs>
+
+        <TabPanel value={currentTab} index={0}>
+          <JobSeekerProfile />
+        </TabPanel>
+
+        <TabPanel value={currentTab} index={1}>
+          <JobApplications />
+        </TabPanel>
+
+        <TabPanel value={currentTab} index={2}>
+          <SavedJobs />
+        </TabPanel>
+
+        <TabPanel value={currentTab} index={3}>
+          <NotificationPreferences />
+        </TabPanel>
+
+        <TabPanel value={currentTab} index={4}>
+          <OngoingProjects />
+        </TabPanel>
       </Box>
-      {renderProfile()}
-    </Container>
+    </StyledContainer>
   );
 };
 

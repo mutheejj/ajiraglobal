@@ -175,23 +175,38 @@ const Home = () => {
                     <Typography variant="subtitle1" color="primary" gutterBottom>
                       {job.company_name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {job.description?.substring(0, 200)}...
-                    </Typography>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {job.description?.substring(0, 150)}...
+                      </Typography>
+                      <Typography variant="body2" color="text.primary" sx={{ mb: 1 }}>
+                        <strong>Required Skills:</strong>
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                        {job.skills?.map((skill, index) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            size="small"
+                            variant="outlined"
+                          />
+                        ))}
+                      </Box>
+                    </Box>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                       <FilterChip
                         icon={<WorkIcon />}
-                        label={job.category}
+                        label={`${job.category} • ${job.project_type?.replace('_', ' ')}`}
                         size="small"
                       />
                       <FilterChip
                         icon={<AttachMoneyIcon />}
-                        label={`${job.currency} ${job.salary_min} - ${job.salary_max}`}
+                        label={`${job.currency} ${job.budget}`}
                         size="small"
                       />
                       <FilterChip
                         icon={<AccessTimeIcon />}
-                        label={new Date(job.created_at).toLocaleDateString()}
+                        label={`Posted ${job.time_ago}`}
                         size="small"
                       />
                     </Box>

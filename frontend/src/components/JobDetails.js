@@ -124,7 +124,7 @@ const JobDetails = ({ job, onClose }) => {
             <Typography variant="h6" gutterBottom>Job Details</Typography>
             <InfoItem>
               <DateRangeIcon />
-              <Typography>Posted: {new Date(job.created_at).toLocaleDateString()}</Typography>
+              <Typography>Posted: {job.time_ago}</Typography>
             </InfoItem>
             <InfoItem>
               <WorkIcon />
