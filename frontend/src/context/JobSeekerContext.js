@@ -39,27 +39,26 @@ export const JobSeekerProvider = ({ children }) => {
                     Object.entries(profileData).filter(([_, value]) => value !== undefined && value !== null)
                 );
 
-                // Only merge with existing profile if there is one
-                const dataToUpdate = profile ? {
-                    ...cleanProfileData,
-                    // Preserve any existing fields that aren't being updated
-                    ...Object.fromEntries(
-                        Object.entries(profile).filter(([key]) => !(key in cleanProfileData))
-                    )
-                } : cleanProfileData;
-
-                // Clean up the data before sending
-                if (dataToUpdate.skills && Array.isArray(dataToUpdate.skills)) {
-                    dataToUpdate.skills = dataToUpdate.skills.join(',');
-                }
+                // When dealing with JSON data, we can include more context
+                console.log('Updating profile with JSON data:', cleanProfileData);
                 
-                data = await JobAPI.updateJobSeekerProfile(dataToUpdate);
+                data = await JobAPI.updateJobSeekerProfile(cleanProfileData);
             } else {
-                // Already a FormData object, just send it
+                // For FormData, just send it as is
+                console.log('Updating profile with FormData');
+                
+                // Don't use axios defaults - explicitly set the content type for file uploads
                 data = await JobAPI.updateJobSeekerProfile(profileData);
             }
             
-            setProfile(data);
+            if (data) {
+                console.log('Profile update successful, received data:', data);
+                setProfile(prevProfile => ({
+                    ...prevProfile,
+                    ...data
+                }));
+            }
+            
             return true;
         } catch (err) {
             console.error('Error updating profile:', err);
@@ -67,6 +66,7 @@ export const JobSeekerProvider = ({ children }) => {
             
             if (err.response?.data) {
                 const errorData = err.response.data;
+                console.log('Error response data:', errorData);
                 
                 if (typeof errorData === 'object' && errorData !== null) {
                     // Handle validation errors from the backend

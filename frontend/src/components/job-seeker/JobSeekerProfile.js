@@ -144,7 +144,7 @@ const JobSeekerProfile = () => {
     try {
       setUpdateStatus({ success: false, message: '' });
       
-      // First, handle regular profile data (without files)
+      // Create a copy of the form data for the text fields
       const profileData = { ...formData };
       
       // Convert skills array to comma-separated string
@@ -152,35 +152,52 @@ const JobSeekerProfile = () => {
         profileData.skills = profileData.skills.join(',');
       }
       
-      // Don't include files in the regular update
-      const success = await updateProfile(profileData);
+      // Step 1: First update all text-based fields
+      console.log('Updating text fields with:', profileData);
+      const textSuccess = await updateProfile(profileData);
       
-      // Separate file uploads to avoid issues
-      if (success) {
-        let fileUploaded = false;
+      if (textSuccess) {
+        // Step 2: Handle each file upload separately
         
         // Handle profile picture upload if selected
         if (selectedImage) {
-          const imageFormData = new FormData();
-          imageFormData.append('profile_picture', selectedImage);
-          await updateProfile(imageFormData);
-          fileUploaded = true;
+          console.log('Uploading profile picture');
+          try {
+            const imageFormData = new FormData();
+            imageFormData.append('profile_picture', selectedImage);
+            
+            // Send the profile picture to the server
+            await updateProfile(imageFormData);
+          } catch (fileError) {
+            console.error('Error uploading profile picture:', fileError);
+            // Continue with other uploads even if this one fails
+          }
         }
         
         // Handle resume upload if selected
         if (selectedResume) {
-          const resumeFormData = new FormData();
-          resumeFormData.append('resume', selectedResume);
-          await uploadResume(resumeFormData);
-          fileUploaded = true;
+          console.log('Uploading resume');
+          try {
+            const resumeFormData = new FormData();
+            resumeFormData.append('resume', selectedResume);
+            await uploadResume(resumeFormData);
+          } catch (fileError) {
+            console.error('Error uploading resume:', fileError);
+            // Continue with other uploads even if this one fails
+          }
         }
         
         // Handle portfolio upload if selected
         if (selectedPortfolio) {
-          const portfolioFormData = new FormData();
-          portfolioFormData.append('portfolio', selectedPortfolio);
-          await uploadPortfolio(portfolioFormData);
-          fileUploaded = true;
+          console.log('Uploading portfolio');
+          try {
+            const portfolioFormData = new FormData();
+            portfolioFormData.append('portfolio', selectedPortfolio);
+            await uploadPortfolio(portfolioFormData);
+          } catch (fileError) {
+            console.error('Error uploading portfolio:', fileError);
+            // Continue with other uploads even if this one fails
+          }
         }
         
         // Set success message

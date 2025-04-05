@@ -254,6 +254,7 @@ class JobSeekerProfileUpdateSerializer(serializers.ModelSerializer):
     portfolio_description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     hourly_rate = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     currency = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
     
     class Meta:
         model = User
@@ -263,9 +264,51 @@ class JobSeekerProfileUpdateSerializer(serializers.ModelSerializer):
             'portfolio_description', 'hourly_rate', 'currency', 'profile_picture'
         ]
     
+    def validate_github_link(self, value):
+        """Ensure github_link is a valid URL if provided"""
+        if value and not value.startswith(('http://', 'https://')):
+            # Try to fix it by prepending https://
+            if not value.startswith('http'):
+                value = 'https://' + value
+        return value
+        
+    def validate_linkedin_link(self, value):
+        """Ensure linkedin_link is a valid URL if provided"""
+        if value and not value.startswith(('http://', 'https://')):
+            # Try to fix it by prepending https://
+            if not value.startswith('http'):
+                value = 'https://' + value
+        return value
+        
+    def validate_personal_website(self, value):
+        """Ensure personal_website is a valid URL if provided"""
+        if value and not value.startswith(('http://', 'https://')):
+            # Try to fix it by prepending https://
+            if not value.startswith('http'):
+                value = 'https://' + value
+        return value
+    
     def update(self, instance, validated_data):
+        logger.info(f"Updating job seeker profile: {validated_data}")
+        
+        # File handling is done in the view, so we don't need to handle profile_picture here
+        if 'profile_picture' in validated_data:
+            del validated_data['profile_picture']
+            
+        # Handle skills conversion if needed
+        if 'skills' in validated_data and validated_data['skills']:
+            # If already a string, leave it as is
+            if not isinstance(validated_data['skills'], str):
+                validated_data['skills'] = ','.join(validated_data['skills'])
+        
         # Update fields on the instance
         for field, value in validated_data.items():
             setattr(instance, field, value)
-        instance.save()
-        return instance
+            
+        try:
+            instance.save()
+            logger.info(f"Job seeker profile updated successfully for {instance.email}")
+            return instance
+        except Exception as e:
+            logger.error(f"Error updating job seeker profile: {str(e)}")
+            raise serializers.ValidationError(f"Error updating profile: {str(e)}")

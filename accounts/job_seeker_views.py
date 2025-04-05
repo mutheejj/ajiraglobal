@@ -31,25 +31,42 @@ class JobSeekerProfileViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get', 'put', 'patch'])
     def profile(self, request):
+        print(f"Profile request method: {request.method}")
+        print(f"Profile request data: {request.data}")
+        print(f"Profile request FILES: {request.FILES}")
+        
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)
             return Response(serializer.data)
         
         # Handle file uploads in multipart/form-data requests
         if 'profile_picture' in request.FILES:
-            request.user.profile_picture = request.FILES['profile_picture']
-            # Save immediately to avoid errors when serializer tries to access URL
-            request.user.save()
+            try:
+                print(f"Processing profile picture: {request.FILES['profile_picture']}")
+                request.user.profile_picture = request.FILES['profile_picture']
+                # Save immediately to avoid errors when serializer tries to access URL
+                request.user.save()
+                print("Profile picture saved successfully")
+            except Exception as e:
+                print(f"Error saving profile picture: {str(e)}")
+                return Response(
+                    {'profile_picture': [f'Error uploading profile picture: {str(e)}']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         # Use the appropriate serializer based on HTTP method
         serializer = self.get_serializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
+            print(f"Serializer is valid. Validated data: {serializer.validated_data}")
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print(f"Serializer validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['post'])
     def resume(self, request):
+        print(f"Resume upload request received: {request.FILES}")
         if 'resume' not in request.FILES:
             return Response(
                 {'detail': 'No resume file provided'},
@@ -57,21 +74,35 @@ class JobSeekerProfileViewSet(viewsets.ModelViewSet):
             )
         
         resume_file = request.FILES['resume']
+        print(f"Resume file: {resume_file.name}, size: {resume_file.size}")
         if resume_file.size > 5 * 1024 * 1024:  # 5MB limit
             return Response(
                 {'detail': 'Resume file size must be less than 5MB'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        request.user.resume = resume_file
-        request.user.save()
-        
-        return Response({
-            'resume': request.user.resume.url if request.user.resume else None
-        })
+        try:
+            # Delete old file if exists
+            if request.user.resume:
+                request.user.resume.delete(save=False)
+                
+            request.user.resume = resume_file
+            request.user.save()
+            
+            print(f"Resume saved successfully for user {request.user.email}")
+            return Response({
+                'resume': request.user.resume.url if request.user.resume else None
+            })
+        except Exception as e:
+            print(f"Error saving resume: {str(e)}")
+            return Response(
+                {'detail': f'Error saving resume: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
     @action(detail=False, methods=['post'])
     def portfolio(self, request):
+        print(f"Portfolio upload request received: {request.FILES}")
         if 'portfolio' not in request.FILES:
             return Response(
                 {'detail': 'No portfolio file provided'},
@@ -79,15 +110,28 @@ class JobSeekerProfileViewSet(viewsets.ModelViewSet):
             )
         
         portfolio_file = request.FILES['portfolio']
+        print(f"Portfolio file: {portfolio_file.name}, size: {portfolio_file.size}")
         if portfolio_file.size > 10 * 1024 * 1024:  # 10MB limit
             return Response(
                 {'detail': 'Portfolio file size must be less than 10MB'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        request.user.portfolio = portfolio_file
-        request.user.save()
-        
-        return Response({
-            'portfolio': request.user.portfolio.url if request.user.portfolio else None
-        })
+        try:
+            # Delete old file if exists
+            if request.user.portfolio:
+                request.user.portfolio.delete(save=False)
+                
+            request.user.portfolio = portfolio_file
+            request.user.save()
+            
+            print(f"Portfolio saved successfully for user {request.user.email}")
+            return Response({
+                'portfolio': request.user.portfolio.url if request.user.portfolio else None
+            })
+        except Exception as e:
+            print(f"Error saving portfolio: {str(e)}")
+            return Response(
+                {'detail': f'Error saving portfolio: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

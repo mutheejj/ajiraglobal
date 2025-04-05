@@ -52,6 +52,16 @@ class JobAPI {
             // Check if profileData is FormData
             const isFormData = profileData instanceof FormData;
             
+            // Log the data being sent for debugging
+            if (isFormData) {
+                console.log('Sending FormData to server:');
+                for (let pair of profileData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+            } else {
+                console.log('Sending JSON data to server:', profileData);
+            }
+            
             // Changed from PUT to PATCH to match backend expectations
             const response = await axios.patch(
                 `${API_BASE_URL}/profile/job-seeker/profile/`, 
@@ -64,7 +74,13 @@ class JobAPI {
             );
             return response.data;
         } catch (error) {
-            throw error.response?.data || error.message;
+            console.error('Error in updateJobSeekerProfile:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+                console.error('Response headers:', error.response.headers);
+            }
+            throw error;
         }
     }
 
