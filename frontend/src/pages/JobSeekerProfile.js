@@ -31,19 +31,10 @@ import {
   DialogActions,
   TextField,
   Alert,
-  AlertTitle,
   Menu,
   MenuItem,
   ListItemIcon,
-  Rating,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  LinearProgress,
-  Tooltip
+  Rating
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import PersonIcon from '@mui/icons-material/Person';
@@ -51,26 +42,19 @@ import WorkIcon from '@mui/icons-material/Work';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
-import TimelineIcon from '@mui/icons-material/Timeline';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DownloadIcon from '@mui/icons-material/Download';
-import SendIcon from '@mui/icons-material/Send';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DoneIcon from '@mui/icons-material/Done';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import UpdateIcon from '@mui/icons-material/Update';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import CancelIcon from '@mui/icons-material/Cancel';
-import MoreTimeIcon from '@mui/icons-material/MoreTime';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
+import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
+import SchoolIcon from '@mui/icons-material/School';
+import LanguageIcon from '@mui/icons-material/Language';
 
 const StyledTab = styled(Tab)(({ theme }) => ({
   textTransform: 'none',
@@ -135,37 +119,27 @@ const ApplicationStatusChip = styled(Chip)(({ theme, status }) => {
   };
 });
 
-const StatCard = styled(Paper)(({ theme }) => ({
+const ProfileHeaderPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  textAlign: 'center',
-  height: '100%',
   borderRadius: '10px',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+  marginBottom: theme.spacing(3),
+  position: 'relative',
+  backgroundImage: 'linear-gradient(to right, #e0f7fa, #bbdefb)',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
 }));
 
-const ActivityItem = styled(ListItem)(({ theme }) => ({
-  borderLeft: `4px solid ${theme.palette.primary.main}`,
-  marginBottom: theme.spacing(1),
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-  borderRadius: '0 8px 8px 0',
-}));
-
-const JobSeekerDashboard = () => {
+const JobSeekerProfile = () => {
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // State for all dashboard data
+  // State for all profile data
   const [profile, setProfile] = useState(null);
   const [applications, setApplications] = useState([]);
   const [savedJobs, setSavedJobs] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [portfolioProjects, setPortfolioProjects] = useState([]);
-  const [jobApplications, setJobApplications] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [jobStats, setJobStats] = useState({});
   
   // Dialog states
   const [portfolioDialog, setPortfolioDialog] = useState({ open: false, mode: 'add', project: null });
@@ -185,10 +159,7 @@ const JobSeekerDashboard = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   
   useEffect(() => {
-    // Fetch all job seeker data on component mount
     fetchData();
-    // Generate fake activity data for demonstration
-    generateDemoData();
   }, []);
   
   const fetchData = async () => {
@@ -206,100 +177,24 @@ const JobSeekerDashboard = () => {
       ] = await Promise.all([
         axios.get('/api/jobseeker/profile/'),
         axios.get('/api/applications/jobseeker/'),
-        axios.get('/jobs/saved/'),
+        axios.get('/api/jobs/saved/'),
         axios.get('/api/notifications/jobseeker/'),
         axios.get('/api/portfolio/projects/')
       ]);
       
       setProfile(profileResponse.data);
-      setApplications(applicationsResponse.data);
-      setSavedJobs(savedJobsResponse.data);
-      setNotifications(notificationsResponse.data);
-      setPortfolioProjects(portfolioResponse.data);
+      setApplications(applicationsResponse.data || []);
+      setSavedJobs(savedJobsResponse.data || []);
+      setNotifications(notificationsResponse.data || []);
+      setPortfolioProjects(portfolioResponse.data || []);
       
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data. Please try again later.');
-      toast.error('Error loading dashboard data');
+      console.error('Error fetching profile data:', err);
+      setError('Failed to load profile data. Please try again later.');
+      toast.error('Error loading profile data');
     } finally {
       setLoading(false);
     }
-  };
-  
-  // Generate demo data for visualization
-  const generateDemoData = () => {
-    // Recent activity data (for timeline)
-    const activityData = [
-      { 
-        id: 1, 
-        type: 'application', 
-        title: 'Applied for Senior React Developer', 
-        company: 'TechCorp Inc.',
-        time: '2 hours ago',
-        status: 'pending'
-      },
-      { 
-        id: 2, 
-        type: 'view', 
-        title: 'Viewed your profile', 
-        company: 'InnovateX Solutions',
-        time: 'Yesterday',
-        status: null
-      },
-      { 
-        id: 3, 
-        type: 'interview', 
-        title: 'Interview scheduled', 
-        company: 'Global Systems Ltd',
-        time: '2 days ago',
-        status: 'scheduled'
-      },
-      { 
-        id: 4, 
-        type: 'application', 
-        title: 'Application accepted', 
-        company: 'DevPro Services',
-        time: '5 days ago',
-        status: 'accepted'
-      },
-      { 
-        id: 5, 
-        type: 'saved', 
-        title: 'Saved job: UI/UX Designer', 
-        company: 'Creative Studios',
-        time: '1 week ago',
-        status: null
-      }
-    ];
-    
-    // Job application stats
-    const stats = {
-      applicationStats: [
-        { name: 'Pending', value: 8 },
-        { name: 'Accepted', value: 3 },
-        { name: 'Rejected', value: 2 },
-        { name: 'Withdrawn', value: 1 }
-      ],
-      categoryStats: [
-        { name: 'Web Dev', applications: 7, interviews: 3 },
-        { name: 'Mobile Dev', applications: 4, interviews: 1 },
-        { name: 'UI/UX', applications: 2, interviews: 2 },
-        { name: 'Data Science', applications: 1, interviews: 0 },
-      ],
-      profileViews: {
-        data: [
-          { name: 'Week 1', views: 12 },
-          { name: 'Week 2', views: 19 },
-          { name: 'Week 3', views: 15 },
-          { name: 'Week 4', views: 27 },
-        ],
-        totalViews: 73,
-        increase: 18.5
-      }
-    };
-    
-    setRecentActivity(activityData);
-    setJobStats(stats);
   };
   
   const handleTabChange = (event, newValue) => {
@@ -366,7 +261,7 @@ const JobSeekerDashboard = () => {
         description: project.description,
         link: project.link || '',
         image: null,
-        technologies: project.technologies.join(', ')
+        technologies: project.technologies ? project.technologies.join(', ') : ''
       });
     } else {
       setProjectForm({
@@ -418,7 +313,9 @@ const JobSeekerDashboard = () => {
         formData.append('image', projectForm.image);
       }
       
-      formData.append('technologies', projectForm.technologies.split(',').map(tech => tech.trim()));
+      // Make sure technologies is an array before sending
+      const techArray = projectForm.technologies.split(',').map(tech => tech.trim());
+      formData.append('technologies', JSON.stringify(techArray));
       
       let response;
       if (portfolioDialog.mode === 'edit') {
@@ -479,15 +376,10 @@ const JobSeekerDashboard = () => {
   };
   
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
-  
-  // Dashboard statistics
-  const totalApplications = Array.isArray(applications) ? applications.length : 0;
-  const pendingApplications = Array.isArray(applications) ? applications.filter(app => app?.status === 'pending').length : 0;
-  const acceptedApplications = Array.isArray(applications) ? applications.filter(app => app?.status === 'accepted').length : 0;
-  const totalSavedJobs = Array.isArray(savedJobs) ? savedJobs.length : 0;
   
   // Render job card for saved jobs and applications
   const renderJobCard = (job, type = 'saved') => (
@@ -499,7 +391,7 @@ const JobSeekerDashboard = () => {
               {job.title}
             </Typography>
             
-            {type === 'application' && (
+            {type === 'application' && job.status && (
               <ApplicationStatusChip 
                 label={job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                 status={job.status}
@@ -622,7 +514,7 @@ const JobSeekerDashboard = () => {
           </Typography>
           
           <Box sx={{ mt: 1 }}>
-            {project.technologies.map(tech => (
+            {project.technologies && Array.isArray(project.technologies) && project.technologies.map(tech => (
               <SkillChip key={tech} label={tech} size="small" />
             ))}
           </Box>
@@ -643,6 +535,131 @@ const JobSeekerDashboard = () => {
       </Card>
     </Grid>
   );
+
+  const renderProfileDetails = () => {
+    if (!profile) return null;
+    
+    return (
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <ProfileSection>
+            <Typography variant="h6" gutterBottom>Personal Information</Typography>
+            <List>
+              <ListItem divider>
+                <ListItemIcon><PersonIcon color="primary" /></ListItemIcon>
+                <ListItemText 
+                  primary="Full Name" 
+                  secondary={profile.full_name || 'Not specified'} 
+                />
+              </ListItem>
+              <ListItem divider>
+                <ListItemIcon><LanguageIcon color="primary" /></ListItemIcon>
+                <ListItemText 
+                  primary="Location" 
+                  secondary={profile.location || 'Not specified'} 
+                />
+              </ListItem>
+              <ListItem divider>
+                <ListItemIcon><WorkIcon color="primary" /></ListItemIcon>
+                <ListItemText 
+                  primary="Job Title" 
+                  secondary={profile.title || 'Not specified'} 
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon><AccessibilityNewIcon color="primary" /></ListItemIcon>
+                <ListItemText 
+                  primary="Experience Level" 
+                  secondary={profile.experience_level ? profile.experience_level.charAt(0).toUpperCase() + profile.experience_level.slice(1) : 'Not specified'} 
+                />
+              </ListItem>
+            </List>
+            
+            <Box sx={{ mt: 2, textAlign: 'right' }}>
+              <Button 
+                startIcon={<EditIcon />} 
+                variant="outlined"
+                onClick={() => navigate('/profile/edit')}
+              >
+                Edit Information
+              </Button>
+            </Box>
+          </ProfileSection>
+        </Grid>
+        
+        <Grid item xs={12} md={6}>
+          <ProfileSection>
+            <Typography variant="h6" gutterBottom>Skills & Expertise</Typography>
+            <Box sx={{ mb: 3 }}>
+              {profile.skills && Array.isArray(profile.skills) && profile.skills.length > 0 ? (
+                profile.skills.map(skill => (
+                  <SkillChip key={skill} label={skill} />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No skills added yet. Showcase your abilities by adding relevant skills.
+                </Typography>
+              )}
+            </Box>
+            
+            <Typography variant="h6" gutterBottom>Education</Typography>
+            <List>
+              {profile.education && Array.isArray(profile.education) && profile.education.length > 0 ? (
+                profile.education.map((edu, index) => (
+                  <ListItem key={index} divider={index < profile.education.length - 1}>
+                    <ListItemIcon><SchoolIcon color="primary" /></ListItemIcon>
+                    <ListItemText 
+                      primary={edu.degree || 'Degree'} 
+                      secondary={`${edu.institution || 'Institution'}${edu.graduation_year ? ` • ${edu.graduation_year}` : ''}`} 
+                    />
+                  </ListItem>
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No education details added yet.
+                </Typography>
+              )}
+            </List>
+            
+            <Box sx={{ mt: 2, textAlign: 'right' }}>
+              <Button 
+                startIcon={<EditIcon />} 
+                variant="outlined"
+                onClick={() => navigate('/profile/edit/skills')}
+              >
+                Edit Skills & Education
+              </Button>
+            </Box>
+          </ProfileSection>
+        </Grid>
+        
+        <Grid item xs={12}>
+          <ProfileSection>
+            <Typography variant="h6" gutterBottom>Bio</Typography>
+            {profile.bio ? (
+              <Typography variant="body1" paragraph>
+                {profile.bio}
+              </Typography>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No bio added yet. Tell potential employers about yourself, your experience, and what you're looking for.
+              </Typography>
+            )}
+            
+            <Box sx={{ mt: 2, textAlign: 'right' }}>
+              <Button 
+                startIcon={<EditIcon />} 
+                variant="outlined"
+                onClick={() => navigate('/profile/edit/bio')}
+              >
+                Edit Bio
+              </Button>
+            </Box>
+          </ProfileSection>
+        </Grid>
+      </Grid>
+    );
+  };
   
   if (loading) {
     return (
@@ -670,152 +687,101 @@ const JobSeekerDashboard = () => {
   
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1">
-          Job Seeker Dashboard
-        </Typography>
-        <Box>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<EditIcon />}
-            onClick={() => navigate('/profile/edit')}
-            sx={{ mr: 2 }}
-          >
-            Edit Profile
-          </Button>
-          <Badge badgeContent={notifications.length} color="error">
-            <IconButton color="primary">
-              <NotificationsIcon />
-            </IconButton>
-          </Badge>
-        </Box>
-      </Box>
-      
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard>
-            <WorkIcon fontSize="large" color="primary" sx={{ mb: 1 }} />
-            <Typography variant="h5" component="div">
-              {totalApplications}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Applications
-            </Typography>
-          </StatCard>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard>
-            <UpdateIcon fontSize="large" color="warning" sx={{ mb: 1 }} />
-            <Typography variant="h5" component="div">
-              {pendingApplications}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Pending
-            </Typography>
-          </StatCard>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard>
-            <DoneIcon fontSize="large" color="success" sx={{ mb: 1 }} />
-            <Typography variant="h5" component="div">
-              {acceptedApplications}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Accepted
-            </Typography>
-          </StatCard>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard>
-            <BookmarkIcon fontSize="large" color="info" sx={{ mb: 1 }} />
-            <Typography variant="h5" component="div">
-              {totalSavedJobs}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Saved Jobs
-            </Typography>
-          </StatCard>
-        </Grid>
-      </Grid>
-      
-      {/* Profile Summary Panel */}
-      {profile && (
-        <ProfileSection>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {/* Profile Header */}
+      <ProfileHeaderPaper elevation={3}>
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} sm={2}>
             <Avatar
-              src={profile.avatar || ''}
-              sx={{ width: 80, height: 80, mr: 3 }}
+              src={profile?.avatar || ''}
+              sx={{ 
+                width: { xs: 100, sm: 120 }, 
+                height: { xs: 100, sm: 120 },
+                mx: { xs: 'auto', sm: 0 }
+              }}
             >
               <PersonIcon fontSize="large" />
             </Avatar>
+          </Grid>
+          
+          <Grid item xs={12} sm={7}>
+            <Typography variant="h4" component="h1" sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+              {profile?.full_name || 'Your Profile'}
+            </Typography>
             
-            <Box>
-              <Typography variant="h5" component="h2">
-                {profile.full_name || 'Your Name'}
-              </Typography>
-              
-              <Typography variant="body1" color="primary" gutterBottom>
-                {profile.title || 'Your Title'}
-              </Typography>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography 
+              variant="h6" 
+              color="primary.main" 
+              sx={{ mb: 1, textAlign: { xs: 'center', sm: 'left' } }}
+            >
+              {profile?.title || 'Job Title'}
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: { xs: 'center', sm: 'flex-start' },
+              flexWrap: 'wrap'
+            }}>
+              {profile?.experience_level && (
                 <Chip 
-                  label={profile.experience_level ? 
-                    profile.experience_level.charAt(0).toUpperCase() + profile.experience_level.slice(1) : 
-                    "Experience Level"
-                  } 
+                  label={profile.experience_level.charAt(0).toUpperCase() + profile.experience_level.slice(1)} 
                   size="small" 
-                  sx={{ mr: 1 }} 
+                  sx={{ mr: 1, mb: { xs: 1, sm: 0 } }} 
                 />
-                
+              )}
+              
+              {profile?.location && (
                 <Chip 
-                  label={profile.location || 'Location'} 
+                  label={profile.location} 
                   size="small" 
                   variant="outlined" 
+                  sx={{ mr: 1, mb: { xs: 1, sm: 0 } }}
                 />
-              </Box>
-            </Box>
-            
-            <Box sx={{ ml: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <Button
-                variant="outlined"
-                startIcon={profile.resume_url ? <DownloadIcon /> : <CloudUploadIcon />}
-                onClick={() => profile.resume_url ? window.open(profile.resume_url) : setUploadDialog(true)}
-                sx={{ mb: 1 }}
-              >
-                {profile.resume_url ? 'Download Resume' : 'Upload Resume'}
-              </Button>
+              )}
               
-              <Typography variant="caption" color="text.secondary">
-                Profile Completion: 
-                <Rating 
-                  value={profile.profile_completion || 2.5} 
-                  precision={0.5} 
-                  size="small" 
-                  readOnly 
-                  sx={{ ml: 1 }}
-                />
-              </Typography>
+              {profile?.profile_completion && (
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  ml: { xs: 0, sm: 2 },
+                  mt: { xs: 1, sm: 0 }
+                }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+                    Profile Completion:
+                  </Typography>
+                  <Rating 
+                    value={profile.profile_completion} 
+                    precision={0.5} 
+                    size="small" 
+                    readOnly 
+                  />
+                </Box>
+              )}
             </Box>
-          </Box>
+          </Grid>
           
-          {profile.bio && (
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="body1">{profile.bio}</Typography>
-            </Box>
-          )}
-          
-          {profile.skills && profile.skills.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              {profile.skills.map(skill => (
-                <SkillChip key={skill} label={skill} />
-              ))}
-            </Box>
-          )}
-        </ProfileSection>
-      )}
+          <Grid item xs={12} sm={3} sx={{ textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              startIcon={profile?.resume_url ? <DownloadIcon /> : <CloudUploadIcon />}
+              onClick={() => profile?.resume_url ? window.open(profile.resume_url) : setUploadDialog(true)}
+              fullWidth
+              sx={{ mb: 1 }}
+            >
+              {profile?.resume_url ? 'Download Resume' : 'Upload Resume'}
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => navigate('/profile/edit')}
+              fullWidth
+            >
+              Edit Profile
+            </Button>
+          </Grid>
+        </Grid>
+      </ProfileHeaderPaper>
       
       {/* Tab Navigation */}
       <Box sx={{ width: '100%' }}>
@@ -823,19 +789,62 @@ const JobSeekerDashboard = () => {
           <StyledTabs 
             value={tabValue} 
             onChange={handleTabChange}
-            aria-label="dashboard tabs"
+            aria-label="profile tabs"
+            variant="scrollable"
+            scrollButtons="auto"
           >
+            <StyledTab label="Profile" icon={<PersonIcon />} iconPosition="start" />
+            <StyledTab label="Portfolio" icon={<FolderSpecialIcon />} iconPosition="start" />
             <StyledTab label="Applications" icon={<WorkIcon />} iconPosition="start" />
             <StyledTab label="Saved Jobs" icon={<BookmarkIcon />} iconPosition="start" />
-            <StyledTab label="Portfolio" icon={<FolderSpecialIcon />} iconPosition="start" />
-            <StyledTab label="Notifications" icon={<NotificationsIcon />} iconPosition="start" />
           </StyledTabs>
         </Box>
         
-        {/* Applications Tab */}
+        {/* Profile Tab */}
         {tabValue === 0 && (
           <Box sx={{ mt: 3 }}>
-            {applications.length > 0 ? (
+            {renderProfileDetails()}
+          </Box>
+        )}
+        
+        {/* Portfolio Tab */}
+        {tabValue === 1 && (
+          <Box sx={{ mt: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => openPortfolioDialog('add')}
+              >
+                Add Project
+              </Button>
+            </Box>
+            
+            {portfolioProjects.length > 0 ? (
+              <Grid container spacing={3}>
+                {portfolioProjects.map(project => renderPortfolioCard(project))}
+              </Grid>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center' }}>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                  You haven't added any portfolio projects yet. Showcase your work to stand out to employers.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  startIcon={<AddIcon />}
+                  onClick={() => openPortfolioDialog('add')}
+                >
+                  Add Your First Project
+                </Button>
+              </Paper>
+            )}
+          </Box>
+        )}
+        
+        {/* Applications Tab */}
+        {tabValue === 2 && (
+          <Box sx={{ mt: 3 }}>
+            {applications && applications.length > 0 ? (
               <Grid container spacing={3}>
                 {applications.map(application => renderJobCard(application, 'application'))}
               </Grid>
@@ -856,9 +865,9 @@ const JobSeekerDashboard = () => {
         )}
         
         {/* Saved Jobs Tab */}
-        {tabValue === 1 && (
+        {tabValue === 3 && (
           <Box sx={{ mt: 3 }}>
-            {savedJobs.length > 0 ? (
+            {savedJobs && savedJobs.length > 0 ? (
               <Grid container spacing={3}>
                 {savedJobs.map(job => renderJobCard(job))}
               </Grid>
@@ -873,103 +882,6 @@ const JobSeekerDashboard = () => {
                 >
                   Browse Jobs
                 </Button>
-              </Paper>
-            )}
-          </Box>
-        )}
-        
-        {/* Portfolio Tab */}
-        {tabValue === 2 && (
-          <Box sx={{ mt: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => openPortfolioDialog('add')}
-              >
-                Add Project
-              </Button>
-            </Box>
-            
-            {portfolioProjects.length > 0 ? (
-              <Grid container spacing={3}>
-                {portfolioProjects.map(project => renderPortfolioCard(project))}
-              </Grid>
-            ) : (
-              <Paper sx={{ p: 3, textAlign: 'center' }}>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                  You haven't added any portfolio projects yet.
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  startIcon={<AddIcon />}
-                  onClick={() => openPortfolioDialog('add')}
-                >
-                  Add Your First Project
-                </Button>
-              </Paper>
-            )}
-          </Box>
-        )}
-        
-        {/* Notifications Tab */}
-        {tabValue === 3 && (
-          <Box sx={{ mt: 3 }}>
-            {notifications.length > 0 ? (
-              <Paper>
-                <List sx={{ width: '100%' }}>
-                  {notifications.map(notification => (
-                    <ListItem
-                      key={notification.id}
-                      secondaryAction={
-                        <IconButton edge="end" aria-label="delete">
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                      divider
-                    >
-                      <ListItemAvatar>
-                        <Avatar sx={{ bgcolor: notification.read ? 'grey.300' : 'primary.light' }}>
-                          {notification.type === 'application_status' ? (
-                            <WorkIcon />
-                          ) : notification.type === 'message' ? (
-                            <SendIcon />
-                          ) : (
-                            <NotificationsIcon />
-                          )}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={notification.title}
-                        secondary={
-                          <>
-                            <Typography 
-                              component="span" 
-                              variant="body2"
-                              sx={{ display: 'block' }}
-                            >
-                              {notification.message}
-                            </Typography>
-                            <Typography 
-                              component="span" 
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: 'block' }}
-                            >
-                              {formatDate(notification.created_at)}
-                            </Typography>
-                          </>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
-            ) : (
-              <Paper sx={{ p: 3, textAlign: 'center' }}>
-                <Typography variant="body1" color="text.secondary">
-                  You don't have any notifications yet.
-                </Typography>
               </Paper>
             )}
           </Box>
@@ -1168,4 +1080,4 @@ const JobSeekerDashboard = () => {
   );
 };
 
-export default JobSeekerDashboard;
+export default JobSeekerProfile; 
