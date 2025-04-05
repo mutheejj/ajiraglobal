@@ -55,6 +55,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         logger.info(f"Starting validation with initial data: {self.initial_data}")
         
+        # Handle update vs create scenario differently
+        # Skip password validation for updates (when instance exists)
+        is_update = self.instance is not None
+        
         # Since the data is already in snake_case format from the frontend,
         # we can simply validate it directly
         data = {}
@@ -70,84 +74,86 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         logger.info(f"Processed data for validation: {data}")
         
-        # Set username to email for authentication
-        if 'email' in data:
+        # Set username to email for authentication (only for new users)
+        if 'email' in data and not is_update:
             data['username'] = data['email']
         
         errors = {}
         
-        # Validate required base fields
-        required_base_fields = ['email', 'password', 'confirm_password', 'user_type']
-        for field in required_base_fields:
-            if field not in data or not data.get(field):
-                errors[field] = [f"{field.replace('_', ' ').title()} is required"]
-        
-        # Validate email
-        email = data.get('email')
-        if email:
-            from django.core.validators import validate_email
-            try:
-                validate_email(email)
-                # Check if email already exists
-                if User.objects.filter(email=email).exists():
-                    errors['email'] = ["This email is already registered"]
-            except ValidationError:
-                errors['email'] = ["Please enter a valid email address"]
-        
-        # Validate password strength and match
-        password = data.get('password')
-        confirm_password = data.get('confirm_password')
-        
-        if password:
-            password_errors = []
-            if len(password) < 8:
-                password_errors.append("Password must be at least 8 characters long")
-            if not any(char.isdigit() for char in password):
-                password_errors.append("Password must contain at least one number")
-            if not any(char.isupper() for char in password):
-                password_errors.append("Password must contain at least one uppercase letter")
-            if not any(char.islower() for char in password):
-                password_errors.append("Password must contain at least one lowercase letter")
-            if not any(char in '!@#$%^&*()' for char in password):
-                password_errors.append("Password must contain at least one special character (!@#$%^&*())")
+        # Only validate these fields for new user registration, not updates
+        if not is_update:
+            # Validate required base fields
+            required_base_fields = ['email', 'password', 'confirm_password', 'user_type']
+            for field in required_base_fields:
+                if field not in data or not data.get(field):
+                    errors[field] = [f"{field.replace('_', ' ').title()} is required"]
             
-            if password_errors:
-                errors['password'] = password_errors
-        
-        if password and confirm_password and password != confirm_password:
-            errors['confirm_password'] = ["Passwords do not match"]
-        
-        # Validate user type specific fields
-        user_type = data.get('user_type')
-        if user_type:
-            if user_type not in ['client', 'job-seeker']:
-                errors['user_type'] = ["User type must be either 'client' or 'job-seeker'"]
-            else:
-                if user_type == 'client':
-                    required_fields = {
-                        'company_name': 'Company Name',
-                        'industry': 'Industry',
-                        'company_size': 'Company Size'
-                    }
-                    # Validate website format if provided
-                    website = data.get('website')
-                    if website and not website.startswith(('http://', 'https://')):
-                        errors['website'] = ["Website must start with http:// or https://"]
-                else:  # job-seeker
-                    required_fields = {
-                        'first_name': 'First Name',
-                        'last_name': 'Last Name',
-                        'profession': 'Profession',
-                        'experience': 'Experience',
-                        'skills': 'Skills'
-                    }
+            # Validate email
+            email = data.get('email')
+            if email:
+                from django.core.validators import validate_email
+                try:
+                    validate_email(email)
+                    # Check if email already exists (only for new users)
+                    if User.objects.filter(email=email).exists():
+                        errors['email'] = ["This email is already registered"]
+                except ValidationError:
+                    errors['email'] = ["Please enter a valid email address"]
+            
+            # Validate password strength and match (only for new users)
+            password = data.get('password')
+            confirm_password = data.get('confirm_password')
+            
+            if password:
+                password_errors = []
+                if len(password) < 8:
+                    password_errors.append("Password must be at least 8 characters long")
+                if not any(char.isdigit() for char in password):
+                    password_errors.append("Password must contain at least one number")
+                if not any(char.isupper() for char in password):
+                    password_errors.append("Password must contain at least one uppercase letter")
+                if not any(char.islower() for char in password):
+                    password_errors.append("Password must contain at least one lowercase letter")
+                if not any(char in '!@#$%^&*()' for char in password):
+                    password_errors.append("Password must contain at least one special character (!@#$%^&*())")
                 
-                for field, display_name in required_fields.items():
-                    field_value = data.get(field)
-                    if not field_value:
-                        errors[field] = [f"{display_name} is required for {user_type} registration"]
-                    elif isinstance(field_value, str) and len(field_value.strip()) < 2:
-                        errors[field] = [f"{display_name} must be at least 2 characters long"]
+                if password_errors:
+                    errors['password'] = password_errors
+            
+            if password and confirm_password and password != confirm_password:
+                errors['confirm_password'] = ["Passwords do not match"]
+            
+            # Validate user type specific fields (only for new users)
+            user_type = data.get('user_type')
+            if user_type:
+                if user_type not in ['client', 'job-seeker']:
+                    errors['user_type'] = ["User type must be either 'client' or 'job-seeker'"]
+                else:
+                    if user_type == 'client':
+                        required_fields = {
+                            'company_name': 'Company Name',
+                            'industry': 'Industry',
+                            'company_size': 'Company Size'
+                        }
+                        # Validate website format if provided
+                        website = data.get('website')
+                        if website and not website.startswith(('http://', 'https://')):
+                            errors['website'] = ["Website must start with http:// or https://"]
+                    else:  # job-seeker
+                        required_fields = {
+                            'first_name': 'First Name',
+                            'last_name': 'Last Name',
+                            'profession': 'Profession',
+                            'experience': 'Experience',
+                            'skills': 'Skills'
+                        }
+                    
+                    for field, display_name in required_fields.items():
+                        field_value = data.get(field)
+                        if not field_value:
+                            errors[field] = [f"{display_name} is required for {user_type} registration"]
+                        elif isinstance(field_value, str) and len(field_value.strip()) < 2:
+                            errors[field] = [f"{display_name} must be at least 2 characters long"]
         
         if errors:
             logger.error(f"Validation errors: {errors}")
@@ -190,6 +196,26 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             logger.error(f"Error saving user: {e.message_dict}")
             raise serializers.ValidationError(e.message_dict)
 
+    def update(self, instance, validated_data):
+        logger.info(f"Updating user with data: {validated_data}")
+        
+        # Remove password and confirm_password as they require special handling
+        validated_data.pop('password', None)
+        validated_data.pop('confirm_password', None)
+        validated_data.pop('user_type', None)  # Don't allow changing user type
+        
+        # Update instance fields
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+            
+        try:
+            instance.full_clean()
+            instance.save()
+            return instance
+        except ValidationError as e:
+            logger.error(f"Error updating user: {e.message_dict}")
+            raise serializers.ValidationError(e.message_dict)
+
 class EmailVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6)
@@ -211,3 +237,35 @@ class EmailVerificationSerializer(serializers.Serializer):
             return data
         except User.DoesNotExist:
             raise serializers.ValidationError("User not found")
+
+class JobSeekerProfileUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating job seeker profiles without password validation."""
+    
+    # Define all fields that can be updated
+    first_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    last_name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    profession = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    experience = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    skills = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    bio = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    github_link = serializers.URLField(required=False, allow_null=True, allow_blank=True)
+    linkedin_link = serializers.URLField(required=False, allow_null=True, allow_blank=True)
+    personal_website = serializers.URLField(required=False, allow_null=True, allow_blank=True)
+    portfolio_description = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    hourly_rate = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    currency = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'profession', 'experience', 'skills', 
+            'bio', 'github_link', 'linkedin_link', 'personal_website', 
+            'portfolio_description', 'hourly_rate', 'currency', 'profile_picture'
+        ]
+    
+    def update(self, instance, validated_data):
+        # Update fields on the instance
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+        return instance

@@ -105,9 +105,54 @@ const Header = () => {
                 gap: '2rem',
                 order: 3
             }}>
-                <Link to="/" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Home</Link>
-                <Link to="/jobs" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Find Jobs</Link>
-                <Link to="/post-job" style={{ color: mode === 'dark' ? '#fff' : '#000', textDecoration: 'none' }}>Post Jobs</Link>
+                <Link to="/jobs" style={{ 
+                    color: mode === 'dark' ? '#fff' : '#000',
+                    textDecoration: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    '&:hover': {
+                        textDecoration: 'underline'
+                    }
+                }}>
+                    Find Jobs
+                </Link>
+                <Link to="/companies" style={{ 
+                    color: mode === 'dark' ? '#fff' : '#000',
+                    textDecoration: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    '&:hover': {
+                        textDecoration: 'underline'
+                    }
+                }}>
+                    Companies
+                </Link>
+                {user?.user_type === 'job-seeker' && (
+                    <Link to="/job-seeker-dashboard" style={{ 
+                        color: mode === 'dark' ? '#fff' : '#000',
+                        textDecoration: 'none',
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        '&:hover': {
+                            textDecoration: 'underline'
+                        }
+                    }}>
+                        Dashboard
+                    </Link>
+                )}
+                {user?.user_type === 'client' && (
+                    <Link to="/client-dashboard" style={{ 
+                        color: mode === 'dark' ? '#fff' : '#000',
+                        textDecoration: 'none',
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        '&:hover': {
+                            textDecoration: 'underline'
+                        }
+                    }}>
+                        Dashboard
+                    </Link>
+                )}
             </nav>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: { xs: 0, sm: 'auto' } }}>

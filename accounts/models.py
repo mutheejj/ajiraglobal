@@ -1,4 +1,3 @@
-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.crypto import get_random_string
@@ -66,19 +65,8 @@ class User(AbstractUser):
                         setattr(self, field, None)
                         
                 elif self.user_type == 'job-seeker':
-                    # Validate required job seeker fields
-                    required_seeker_fields = {
-                        'first_name': 'First Name',
-                        'last_name': 'Last Name',
-                        'profession': 'Profession',
-                        'experience': 'Experience',
-                        'skills': 'Skills',
-                        'github_link': 'GitHub Profile',
-                        'linkedin_link': 'LinkedIn Profile'
-                    }
-                    for field, display_name in required_seeker_fields.items():
-                        if not getattr(self, field):
-                            errors[field] = [f'{display_name} is required for job seeker accounts.']
+                    # Make all fields optional for job seekers for easier profile updates
+                    # Remove strict validation for required fields
                     
                     # Set client fields to None
                     client_fields = ['company_name', 'industry', 'company_size', 'website', 'description']

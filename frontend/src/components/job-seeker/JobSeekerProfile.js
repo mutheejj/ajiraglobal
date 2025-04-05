@@ -52,7 +52,7 @@ const SocialLink = styled(Box)(({ theme }) => ({
 }));
 
 const JobSeekerProfile = () => {
-  const { profile, loading, error, updateProfile, refreshProfile } = useJobSeeker();
+  const { profile, loading, error, updateProfile, uploadResume, uploadPortfolio, refreshProfile } = useJobSeeker();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -71,6 +71,8 @@ const JobSeekerProfile = () => {
   const [newSkill, setNewSkill] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [selectedResume, setSelectedResume] = useState(null);
+  const [selectedPortfolio, setSelectedPortfolio] = useState(null);
   const [updateStatus, setUpdateStatus] = useState({ success: false, message: '' });
 
   useEffect(() => {
@@ -125,38 +127,85 @@ const JobSeekerProfile = () => {
       setPreviewImage(URL.createObjectURL(file));
     }
   };
+  
+  const handleResumeChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedResume(event.target.files[0]);
+    }
+  };
+  
+  const handlePortfolioChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedPortfolio(event.target.files[0]);
+    }
+  };
 
   const handleSubmit = async () => {
     try {
-      const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'skills') {
-          formDataToSend.append(key, JSON.stringify(formData[key]));
-        } else {
-          formDataToSend.append(key, formData[key]);
-        }
-      });
-
-      if (selectedImage) {
-        formDataToSend.append('profile_picture', selectedImage);
+      setUpdateStatus({ success: false, message: '' });
+      
+      // First, handle regular profile data (without files)
+      const profileData = { ...formData };
+      
+      // Convert skills array to comma-separated string
+      if (profileData.skills && Array.isArray(profileData.skills)) {
+        profileData.skills = profileData.skills.join(',');
       }
-
-      const success = await updateProfile(formDataToSend);
+      
+      // Don't include files in the regular update
+      const success = await updateProfile(profileData);
+      
+      // Separate file uploads to avoid issues
       if (success) {
+        let fileUploaded = false;
+        
+        // Handle profile picture upload if selected
+        if (selectedImage) {
+          const imageFormData = new FormData();
+          imageFormData.append('profile_picture', selectedImage);
+          await updateProfile(imageFormData);
+          fileUploaded = true;
+        }
+        
+        // Handle resume upload if selected
+        if (selectedResume) {
+          const resumeFormData = new FormData();
+          resumeFormData.append('resume', selectedResume);
+          await uploadResume(resumeFormData);
+          fileUploaded = true;
+        }
+        
+        // Handle portfolio upload if selected
+        if (selectedPortfolio) {
+          const portfolioFormData = new FormData();
+          portfolioFormData.append('portfolio', selectedPortfolio);
+          await uploadPortfolio(portfolioFormData);
+          fileUploaded = true;
+        }
+        
+        // Set success message
         setUpdateStatus({
           success: true,
           message: 'Profile updated successfully!'
         });
+        
+        // Clean up preview and file selection states
         if (previewImage) {
           URL.revokeObjectURL(previewImage);
           setPreviewImage(null);
         }
         setSelectedImage(null);
+        setSelectedResume(null);
+        setSelectedPortfolio(null);
+        
+        // Refresh profile to get updated data
+        await refreshProfile();
       }
     } catch (err) {
+      console.error('Profile update error:', err);
       setUpdateStatus({
         success: false,
-        message: 'Failed to update profile. Please try again.'
+        message: err.message || 'Failed to update profile. Please try again.'
       });
     }
   };
@@ -402,6 +451,73 @@ const JobSeekerProfile = () => {
                 multiline
                 rows={4}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* Resume upload */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <input
+                    accept=".pdf,.doc,.docx"
+                    style={{ display: 'none' }}
+                    id="resume-file-input"
+                    type="file"
+                    onChange={handleResumeChange}
+                  />
+                  <label htmlFor="resume-file-input">
+                    <Button variant="outlined" component="span">
+                      {selectedResume ? 'Change Resume' : 'Upload Resume'}
+                    </Button>
+                  </label>
+                  {(selectedResume || profile?.resume) && (
+                    <Typography variant="body2">
+                      {selectedResume ? selectedResume.name : 'Current resume uploaded'}
+                      {profile?.resume && !selectedResume && (
+                        <Button
+                          href={profile.resume}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ ml: 1 }}
+                          size="small"
+                        >
+                          View
+                        </Button>
+                      )}
+                    </Typography>
+                  )}
+                </Box>
+                
+                {/* Portfolio upload */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <input
+                    accept=".pdf,.doc,.docx,.zip,.rar"
+                    style={{ display: 'none' }}
+                    id="portfolio-file-input"
+                    type="file"
+                    onChange={handlePortfolioChange}
+                  />
+                  <label htmlFor="portfolio-file-input">
+                    <Button variant="outlined" component="span">
+                      {selectedPortfolio ? 'Change Portfolio' : 'Upload Portfolio'}
+                    </Button>
+                  </label>
+                  {(selectedPortfolio || profile?.portfolio) && (
+                    <Typography variant="body2">
+                      {selectedPortfolio ? selectedPortfolio.name : 'Current portfolio uploaded'}
+                      {profile?.portfolio && !selectedPortfolio && (
+                        <Button
+                          href={profile.portfolio}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ ml: 1 }}
+                          size="small"
+                        >
+                          View
+                        </Button>
+                      )}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
             </Grid>
           </Grid>
 

@@ -49,8 +49,19 @@ class JobAPI {
 
     static async updateJobSeekerProfile(profileData) {
         try {
+            // Check if profileData is FormData
+            const isFormData = profileData instanceof FormData;
+            
             // Changed from PUT to PATCH to match backend expectations
-            const response = await axios.patch(`${API_BASE_URL}/profile/job-seeker/profile/`, profileData);
+            const response = await axios.patch(
+                `${API_BASE_URL}/profile/job-seeker/profile/`, 
+                profileData,
+                isFormData ? {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    }
+                } : {}
+            );
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -105,6 +116,19 @@ class JobAPI {
     static async uploadResume(formData) {
         try {
             const response = await axios.post(`${API_BASE_URL}/profile/resume/`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    }
+
+    static async uploadPortfolio(formData) {
+        try {
+            const response = await axios.post(`${API_BASE_URL}/profile/portfolio/`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

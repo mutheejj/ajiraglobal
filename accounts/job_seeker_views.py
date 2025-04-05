@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.shortcuts import get_object_or_404
 from .models import User
-from .serializers import UserRegistrationSerializer, JobSeekerPublicSerializer
+from .serializers import UserRegistrationSerializer, JobSeekerPublicSerializer, JobSeekerProfileUpdateSerializer
 
 class JobSeekerProfileViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
@@ -17,6 +17,8 @@ class JobSeekerProfileViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return JobSeekerPublicSerializer
+        elif self.action == 'profile' and self.request.method in ['PATCH', 'PUT']:
+            return JobSeekerProfileUpdateSerializer
         return UserRegistrationSerializer
     
     def get_queryset(self):
@@ -33,6 +35,13 @@ class JobSeekerProfileViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(request.user)
             return Response(serializer.data)
         
+        # Handle file uploads in multipart/form-data requests
+        if 'profile_picture' in request.FILES:
+            request.user.profile_picture = request.FILES['profile_picture']
+            # Save immediately to avoid errors when serializer tries to access URL
+            request.user.save()
+        
+        # Use the appropriate serializer based on HTTP method
         serializer = self.get_serializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -59,4 +68,26 @@ class JobSeekerProfileViewSet(viewsets.ModelViewSet):
         
         return Response({
             'resume': request.user.resume.url if request.user.resume else None
+        })
+        
+    @action(detail=False, methods=['post'])
+    def portfolio(self, request):
+        if 'portfolio' not in request.FILES:
+            return Response(
+                {'detail': 'No portfolio file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        portfolio_file = request.FILES['portfolio']
+        if portfolio_file.size > 10 * 1024 * 1024:  # 10MB limit
+            return Response(
+                {'detail': 'Portfolio file size must be less than 10MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        request.user.portfolio = portfolio_file
+        request.user.save()
+        
+        return Response({
+            'portfolio': request.user.portfolio.url if request.user.portfolio else None
         })

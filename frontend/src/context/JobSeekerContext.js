@@ -27,20 +27,64 @@ export const JobSeekerProvider = ({ children }) => {
     const updateProfile = async (profileData) => {
         try {
             setLoading(true);
-            // Merge new profile data with existing profile data
-            const mergedProfileData = { ...profile, ...profileData };
-            const data = await JobAPI.updateJobSeekerProfile(mergedProfileData);
-            setProfile(data);
             setError(null);
+
+            // Check if profileData is FormData
+            const isFormData = profileData instanceof FormData;
+
+            let data;
+            if (!isFormData) {
+                // Clean up the profile data by removing undefined or null values
+                const cleanProfileData = Object.fromEntries(
+                    Object.entries(profileData).filter(([_, value]) => value !== undefined && value !== null)
+                );
+
+                // Only merge with existing profile if there is one
+                const dataToUpdate = profile ? {
+                    ...cleanProfileData,
+                    // Preserve any existing fields that aren't being updated
+                    ...Object.fromEntries(
+                        Object.entries(profile).filter(([key]) => !(key in cleanProfileData))
+                    )
+                } : cleanProfileData;
+
+                // Clean up the data before sending
+                if (dataToUpdate.skills && Array.isArray(dataToUpdate.skills)) {
+                    dataToUpdate.skills = dataToUpdate.skills.join(',');
+                }
+                
+                data = await JobAPI.updateJobSeekerProfile(dataToUpdate);
+            } else {
+                // Already a FormData object, just send it
+                data = await JobAPI.updateJobSeekerProfile(profileData);
+            }
+            
+            setProfile(data);
             return true;
         } catch (err) {
-            const errorMessage = err.response?.data || err.message;
-            setError(typeof errorMessage === 'object' ? 
-                Object.entries(errorMessage).map(([key, value]) => `${key}: ${value}`).join('\n') : 
-                errorMessage
-            );
-            console.error('Error updating profile:', errorMessage);
-            return false;
+            console.error('Error updating profile:', err);
+            let errorMessage = 'An error occurred while updating the profile';
+            
+            if (err.response?.data) {
+                const errorData = err.response.data;
+                
+                if (typeof errorData === 'object' && errorData !== null) {
+                    // Handle validation errors from the backend
+                    errorMessage = Object.entries(errorData)
+                        .map(([field, errors]) => {
+                            const errorText = Array.isArray(errors) ? errors.join(', ') : String(errors);
+                            return `${field}: ${errorText}`;
+                        })
+                        .join('\n');
+                } else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
+            throw new Error(errorMessage); // Throw error to be caught by the component
         } finally {
             setLoading(false);
         }
@@ -53,6 +97,17 @@ export const JobSeekerProvider = ({ children }) => {
             return true;
         } catch (err) {
             console.error('Error uploading resume:', err);
+            return false;
+        }
+    };
+
+    const uploadPortfolio = async (formData) => {
+        try {
+            const data = await JobAPI.uploadPortfolio(formData);
+            setProfile(prev => ({ ...prev, portfolio: data.portfolio }));
+            return true;
+        } catch (err) {
+            console.error('Error uploading portfolio:', err);
             return false;
         }
     };
@@ -98,6 +153,7 @@ export const JobSeekerProvider = ({ children }) => {
         applicationsLoading,
         updateProfile,
         uploadResume,
+        uploadPortfolio,
         applyForJob,
         refreshProfile,
         refreshApplications: fetchApplications
